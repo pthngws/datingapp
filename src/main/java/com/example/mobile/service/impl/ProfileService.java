@@ -1,7 +1,8 @@
-package com.example.mobile.service;
+package com.example.mobile.service.impl;
 
 import com.example.mobile.model.Profile;
 import com.example.mobile.repository.ProfileRepository;
+import com.example.mobile.service.IProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

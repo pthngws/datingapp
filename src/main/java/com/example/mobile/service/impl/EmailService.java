@@ -1,4 +1,4 @@
-package com.example.mobile.service;
+package com.example.mobile.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -15,7 +15,8 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("Mã OTP của bạn");
-        message.setText("Mã OTP của bạn là: " + otp + "\nVui lòng không chia sẻ mã này với ai khác.");
+        message.setText("Mã OTP của bạn là: " + otp +
+                "\nVui lòng không chia sẻ mã này với ai khác.");
 
         mailSender.send(message);
     }
