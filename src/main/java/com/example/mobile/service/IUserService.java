@@ -17,4 +17,8 @@ public interface IUserService {
     void deleteUser(String id);
 
     Optional<User> login(String username, String password);
+
+    void sendOtp(String email);
+
+    boolean resetPassword(String email, String otp, String newPassword);
 }

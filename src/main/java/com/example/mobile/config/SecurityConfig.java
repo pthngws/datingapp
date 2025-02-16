@@ -19,7 +19,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Tắt CSRF (chỉ dùng nếu API không cần)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/signup", "/api/auth/login","/api/profiles/**", "/api/auth/reset-password").permitAll() // Cho phép truy cập API đăng ký mà không cần xác thực
+                        .requestMatchers("/api/auth/signup", "/api/auth/login","/api/profiles/**", "/api/auth/reset-password", "/api/auth/forgot-password").permitAll() // Cho phép truy cập API đăng ký mà không cần xác thực
                         .anyRequest().authenticated() // Các API khác yêu cầu đăng nhập
                 )
                 .formLogin(form -> form.disable()) // Tắt form login mặc định của Spring Security
