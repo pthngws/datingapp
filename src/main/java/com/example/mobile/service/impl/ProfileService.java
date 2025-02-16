@@ -14,29 +14,10 @@ public class ProfileService implements IProfileService {
     private ProfileRepository profileRepository;
 
     @Override
-    public List<Profile> getProfilesByFirstName(String firstName) {
-        return profileRepository.findByFirstNameContainingIgnoreCase(firstName);
+    public List<Profile> searchProfiles(String firstName, String lastName, Boolean gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight) {
+        return profileRepository.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight);
     }
-    @Override
-    public List<Profile> getProfilesByLastName(String lastName) {
-        return profileRepository.findByLastNameContainingIgnoreCase(lastName);
-    }
-    @Override
-    public List<Profile> getProfilesByGender(boolean gender) {
-        return profileRepository.findByGender(gender);
-    }
-    @Override
-    public List<Profile> getProfilesByAge(int age) {
-        return profileRepository.findByAge(age);
-    }
-    @Override
-    public List<Profile> getProfilesByAgeRange(int minAge, int maxAge) {
-        return profileRepository.findByAgeBetween(minAge, maxAge);
-    }
-    @Override
-    public List<Profile> getProfilesByHeightRange(int minHeight, int maxHeight) {
-        return profileRepository.findByHeightBetween(minHeight, maxHeight);
-    }
+
 
 
 }

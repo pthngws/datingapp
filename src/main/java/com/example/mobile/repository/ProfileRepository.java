@@ -2,21 +2,35 @@ package com.example.mobile.repository;
 
 
 import com.example.mobile.model.Profile;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-public interface ProfileRepository extends MongoRepository<Profile, String> {
-    List<Profile> findByFirstNameContainingIgnoreCase(String firstName);
+@Repository
+public class ProfileRepository {
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
-    List<Profile> findByLastNameContainingIgnoreCase(String lastName);
+    public List<Profile> searchProfiles(String firstName, String lastName, Boolean gender, Integer minAge, Integer maxAge, Integer age, Integer minHeight, Integer maxHeight) {
+        Query query = new Query();
 
-    List<Profile> findByGender(boolean gender);
+        if (firstName != null) {
+            query.addCriteria(Criteria.where("firstName").regex(firstName, "i"));
+        }
+        if (lastName != null) {
+            query.addCriteria(Criteria.where("lastName").regex(lastName, "i"));
+        }
+        if (gender != null) {
+            query.addCriteria(Criteria.where("gender").is(gender));
+        }
+        if (minAge != null && maxAge != null) {
+            query.addCriteria(Criteria.where("age").gte(minAge).lte(maxAge));
+        }
 
-    List<Profile> findByAge(int age);
-
-    List<Profile> findByAgeBetween(int minAge, int maxAge);
-
-    List<Profile> findByHeightBetween(int minHeight, int maxHeight);
-
+        return mongoTemplate.find(query, Profile.class);
+    }
 }

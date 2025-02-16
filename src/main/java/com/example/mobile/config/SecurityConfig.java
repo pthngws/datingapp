@@ -3,7 +3,6 @@ package com.example.mobile.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,16 +28,20 @@ public class SecurityConfig {
     }
 
     private final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/signup", "/api/auth/login","/api/profiles/**", "/api/auth/reset-password", "/api/auth/forgot-password"
+            "/api/auth/signup",
+            "/api/auth/login",
+            "/api/profiles/**",
+            "/api/auth/reset-password",
+            "/api/auth/forgot-password",
+            "/api/profiles/search"
     };
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtDecoder jwtDecoder) throws Exception {
         httpSecurity
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(PUBLIC_ENDPOINTS)
-                        .permitAll()
-                        .requestMatchers(HttpMethod.GET,"/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated());

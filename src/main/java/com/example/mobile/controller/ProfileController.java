@@ -1,11 +1,13 @@
 package com.example.mobile.controller;
 
-
+import com.example.mobile.dto.response.ApiResponse;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
 import com.example.mobile.service.IProfileService;
 import com.example.mobile.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,39 +24,37 @@ public class ProfileController {
     @Autowired
     private IUserService userService;
 
-    @GetMapping("/firstName")
-    public List<Profile> getProfilesByFirstName(@RequestParam String firstName) {
-        return profileService.getProfilesByFirstName(firstName);
-    }
-
-    @GetMapping("/lastName")
-    public List<Profile> getProfilesByLastName(@RequestParam String lastName) {
-        return profileService.getProfilesByLastName(lastName);
-    }
-
-    @GetMapping("/gender")
-    public List<Profile> getProfilesByGender(@RequestParam boolean gender) {
-        return profileService.getProfilesByGender(gender);
-    }
-
-    @GetMapping("/age")
-    public List<Profile> getProfilesByAge(@RequestParam int age) {
-        return profileService.getProfilesByAge(age);
-    }
-
-    @GetMapping("/ageRange")
-    public List<Profile> getProfilesByAgeRange(@RequestParam int minAge, @RequestParam int maxAge) {
-        return profileService.getProfilesByAgeRange(minAge, maxAge);
-    }
-
-    @GetMapping("/heightRange")
-    public List<Profile> getProfilesByHeightRange(@RequestParam int minHeight, @RequestParam int maxHeight) {
-        return profileService.getProfilesByHeightRange(minHeight, maxHeight);
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<Profile>>> searchProfiles(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) Boolean gender,
+            @RequestParam(required = false) Integer age,
+            @RequestParam(required = false) Integer minAge,
+            @RequestParam(required = false) Integer maxAge,
+            @RequestParam(required = false) Integer minHeight,
+            @RequestParam(required = false) Integer maxHeight
+    ) {
+        try
+        {
+            List<Profile> profiles = profileService.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight);
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Search completed", profiles));
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/recent")
-    public List<User> getUsersCreatedWithinLast7Days() {
-        return userService.getUsersCreatedWithinLast7Days();
+    public ResponseEntity<ApiResponse<List<User>>> getUsersCreatedWithinLast7Days() {
+        try {
+            List<User> users = userService.getUsersCreatedWithinLast7Days();
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Users created within the last 7 days", users));
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return ResponseEntity.notFound().build();
     }
-
 }

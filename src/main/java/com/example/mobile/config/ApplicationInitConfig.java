@@ -21,6 +21,7 @@ public class ApplicationInitConfig {
             if(userRepository.findByUsername("admin")==null)
             {
                 User userDto = new User();
+                userDto.setUsername("admin");
                 userDto.setEmail("admin@admin");
                 userDto.setPassword(passwordEncoder.encode("admin@admin"));
                 userDto.setRole("ADMIN");
