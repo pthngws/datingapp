@@ -4,7 +4,9 @@ package com.example.mobile.service.impl;
 import com.example.mobile.dto.IntrospectDto;
 import com.example.mobile.dto.request.LoginDto;
 import com.example.mobile.dto.response.UserDto;
+import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
+import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IAuthenticateService;
 import com.example.mobile.service.IUserService;
@@ -40,6 +42,9 @@ public class AuthenticateService implements IAuthenticateService {
     private EmailService emailService;
 
     private HashMap<String, String> otpStorage = new HashMap<>();
+
+    @Autowired
+    private ProfileRepository profileRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -99,6 +104,8 @@ public class AuthenticateService implements IAuthenticateService {
             user.setCreateDate(LocalDate.now());
             user.setRole("USER");
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            Profile profile = new Profile();
+            user.setProfile(profileRepository.save(profile));
             return userRepository.save(user);
         } catch (org.springframework.dao.DuplicateKeyException e) {
             throw new IllegalArgumentException("Username đã tồn tại");
