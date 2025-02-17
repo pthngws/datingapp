@@ -8,4 +8,6 @@ public interface IUserService {
     List<User> getUsersCreatedWithinLast7Days();
 
     User findByUsername(String username);
+
+    User findUserById(String id);
 }

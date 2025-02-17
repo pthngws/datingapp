@@ -8,10 +8,8 @@ import com.example.mobile.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -57,4 +55,46 @@ public class ProfileController {
         }
         return ResponseEntity.notFound().build();
     }
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse<Profile>> updateProfile(@RequestBody Profile updatedProfile) {
+        try {
+            // Lấy ID từ token
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userId = authentication.getName();  // userId lưu trong "sub" của token
+
+            if (userId == null || userId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Không tìm thấy ID từ token", null));
+            }
+
+            // Tìm User theo userId
+            User user = userService.findUserById(userId);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Không tìm thấy User với ID: " + userId, null));
+            }
+
+            // Lấy profile từ user
+            if (user.getProfile() == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Không tìm thấy Profile của user", null));
+            }
+
+            // Cập nhật profile
+            String profileId = user.getProfile().getId(); // Lấy ID của Profile
+            Profile profile = profileService.updateProfile(profileId, updatedProfile); // Cập nhật profile
+
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Cập nhật profile thành công", profile));
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "ID trong token không hợp lệ", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống", null));
+        }
+    }
+
 }

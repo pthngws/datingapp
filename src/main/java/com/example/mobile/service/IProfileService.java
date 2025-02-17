@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface IProfileService {
 
-
+    Profile updateProfile(String id, Profile updatedProfile);
     List<Profile> searchProfiles(String firstName, String lastName, Boolean gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight);
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService implements IUserService {
@@ -25,6 +26,12 @@ public class UserService implements IUserService {
     public User findByUsername(String username)
     {
         return userRepository.findByUsername(username) ;
+    }
+
+    @Override
+    public User findUserById(String id) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        return optionalUser.orElse(null);
     }
 
 }

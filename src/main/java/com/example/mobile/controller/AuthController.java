@@ -38,14 +38,12 @@ public class AuthController {
 
             User savedUser = authenticateService.signup(user);
 
-            if (savedUser == null) {
-                ApiResponse<User> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Tên người dùng đã tồn tại", null);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-
             ApiResponse<User> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng ký thành công", savedUser);
             return ResponseEntity.ok(response);
 
+        } catch (IllegalArgumentException e) {
+            ApiResponse<User> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             ApiResponse<User> response = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

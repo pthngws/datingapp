@@ -100,6 +100,9 @@ public class AuthenticateService implements IAuthenticateService {
 
     @Override
     public User signup(User user) {
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new IllegalArgumentException("Tên người dùng đã tồn tại");
+        }
         try {
             user.setCreateDate(LocalDate.now());
             user.setRole("USER");
