@@ -4,7 +4,9 @@ package com.example.mobile.service.impl;
 import com.example.mobile.dto.IntrospectDto;
 import com.example.mobile.dto.request.LoginDto;
 import com.example.mobile.dto.response.UserDto;
+import com.example.mobile.model.Address;
 import com.example.mobile.model.Profile;
+import com.example.mobile.model.Role;
 import com.example.mobile.model.User;
 import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.UserRepository;
@@ -70,18 +72,22 @@ public class AuthenticateService implements IAuthenticateService {
     @Override
     public String generateToken(User userEntity) throws JOSEException {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
+
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(userEntity.getId())
-                .claim("scope", userEntity.getRole())
+                .subject(userEntity.getId()) // Lưu userId trong "sub"
+                .claim("role", "ROLE_" + userEntity.getRole())
                 .issuer("http://localhost:8080")
                 .issueTime(new Date())
-                .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
+                .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
                 .build();
+
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(jwsHeader, payload);
         jwsObject.sign(new MACSigner(SECRET.getBytes()));
+
         return jwsObject.serialize();
     }
+
 
     @Override
     public UserDto login(LoginDto loginRequestDto) throws JOSEException {
@@ -105,9 +111,10 @@ public class AuthenticateService implements IAuthenticateService {
         }
         try {
             user.setCreateDate(LocalDate.now());
-            user.setRole("USER");
+            user.setRole(Role.USER);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             Profile profile = new Profile();
+            profile.setAddress(new Address());
             user.setProfile(profileRepository.save(profile));
             return userRepository.save(user);
         } catch (org.springframework.dao.DuplicateKeyException e) {
@@ -130,7 +137,7 @@ public class AuthenticateService implements IAuthenticateService {
             Optional<User> userOpt = userRepository.findByEmail(email);
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
-                user.setPassword(newPassword);
+                user.setPassword(passwordEncoder.encode(newPassword));
                 userRepository.save(user);
                 otpStorage.remove(email);
                 return true;

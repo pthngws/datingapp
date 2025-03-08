@@ -1,5 +1,6 @@
 package com.example.mobile.repository;
 
+import com.example.mobile.model.Gender;
 import com.example.mobile.model.Profile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -16,7 +17,7 @@ public class ProfileRepositoryImpl implements ProfileRepositoryCustom {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public List<Profile> searchProfiles(String firstName, String lastName, Boolean gender, Integer minAge, Integer maxAge, Integer age, Integer minHeight, Integer maxHeight) {
+    public List<Profile> searchProfiles(String firstName, String lastName, Gender gender, Integer minAge, Integer maxAge, Integer age, Integer minHeight, Integer maxHeight) {
         Query query = new Query();
 
         if (firstName != null) {
@@ -26,7 +27,7 @@ public class ProfileRepositoryImpl implements ProfileRepositoryCustom {
             query.addCriteria(Criteria.where("lastName").regex(lastName, "i"));
         }
         if (gender != null) {
-            query.addCriteria(Criteria.where("gender").is(gender));
+            query.addCriteria(Criteria.where("gender").is(gender.name()));
         }
         if (minAge != null && maxAge != null) {
             query.addCriteria(Criteria.where("age").gte(minAge).lte(maxAge));

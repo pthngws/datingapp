@@ -1,5 +1,6 @@
 package com.example.mobile.dto.response;
 
+import com.example.mobile.model.Role;
 import com.example.mobile.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,7 +13,7 @@ public class UserDto {
     private String id;
     private String username;
     private String email;
-    private String role;
+    private Role role;
     private String token;
 
     public UserDto(User user) {

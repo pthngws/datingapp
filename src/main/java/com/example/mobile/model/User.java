@@ -16,12 +16,11 @@ public class User {
 
     @Indexed(unique = true)
     private String username;
-
     private String password;
     private String email;
     private LocalDate createDate;
-    private String role;
-
+    private Role role;
+    private String status;
     @DBRef(lazy = true)
     private Profile profile;
 

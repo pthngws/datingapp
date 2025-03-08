@@ -1,6 +1,7 @@
 package com.example.mobile.controller;
 
 import com.example.mobile.dto.response.ApiResponse;
+import com.example.mobile.model.Gender;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
 import com.example.mobile.service.IProfileService;
@@ -26,7 +27,7 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<List<Profile>>> searchProfiles(
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) Boolean gender,
+            @RequestParam(required = false) Gender gender,
             @RequestParam(required = false) Integer age,
             @RequestParam(required = false) Integer minAge,
             @RequestParam(required = false) Integer maxAge,
@@ -55,6 +56,7 @@ public class ProfileController {
         }
         return ResponseEntity.notFound().build();
     }
+
     @PutMapping("/update")
     public ResponseEntity<ApiResponse<Profile>> updateProfile(@RequestBody Profile updatedProfile) {
         try {

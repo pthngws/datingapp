@@ -1,5 +1,6 @@
 package com.example.mobile.service.impl;
 
+import com.example.mobile.model.Gender;
 import com.example.mobile.model.Profile;
 import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.service.IProfileService;
@@ -27,8 +28,8 @@ public class ProfileService implements IProfileService {
             if (updatedProfile.getLastName() != null) {
                 existingProfile.setLastName(updatedProfile.getLastName());
             }
-            // Gender là kiểu boolean, chỉ cập nhật nếu có sự thay đổi
-            existingProfile.setGender(updatedProfile.isGender());
+
+            existingProfile.setGender(updatedProfile.getGender());
 
             // age và height là int, kiểm tra giá trị hợp lệ (> 0)
             if (updatedProfile.getAge() > 0) {
@@ -38,9 +39,6 @@ public class ProfileService implements IProfileService {
                 existingProfile.setHeight(updatedProfile.getHeight());
             }
 
-            if (updatedProfile.getAvatar() != null) {
-                existingProfile.setAvatar(updatedProfile.getAvatar());
-            }
             if (updatedProfile.getAddress() != null) {
                 existingProfile.setAddress(updatedProfile.getAddress());
             }
@@ -52,7 +50,7 @@ public class ProfileService implements IProfileService {
     }
 
     @Override
-    public List<Profile> searchProfiles(String firstName, String lastName, Boolean gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight) {
+    public List<Profile> searchProfiles(String firstName, String lastName, Gender gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight) {
         return profileRepository.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight);
     }
 

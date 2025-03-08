@@ -30,10 +30,8 @@ public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {
             "/api/auth/signup",
             "/api/auth/login",
-            "/api/profiles/**",
             "/api/auth/reset-password",
-            "/api/auth/forgot-password",
-            "/api/profiles/search"
+            "/api/auth/forgot-password"
     };
 
 
@@ -41,8 +39,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtDecoder jwtDecoder) throws Exception {
         httpSecurity
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers(PUBLIC_ENDPOINTS)
-                        .permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers("/api/profiles/search").hasRole("ADMIN")
                         .anyRequest()
                         .authenticated());
 
@@ -95,8 +93,8 @@ public class SecurityConfig {
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
-
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix(""); // Không cần thêm "ROLE_" vì đã có
+        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("role"); // Đọc từ "role"
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
 

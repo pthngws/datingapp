@@ -1,24 +1,18 @@
 package com.example.mobile.model;
 
+
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
-
 @Data
-@Document(collection = "profiles")
-public class Profile {
+@Document(collection = "filters")
+public class Filter {
     @Id
     private String id;
-
-    private String firstName;
-    private String lastName;
-    private String bio;
+    private String userId;
     private Gender gender;
-    private int age;
-    private int height;
-    private List<Photo> photos;
-
+    private int minAge;
+    private int maxAge;
     private Address address;
 }
