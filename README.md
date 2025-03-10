@@ -70,8 +70,6 @@ src/
 ├── main/
 │   ├── java/com/example/mobile/       # Backend logic (Controllers, Services, Repositories)
 │   ├── resources/
-│   │   ├── templates/                    # Giao diện người dùng (HTML)
-│   │   ├── static/                       # File tĩnh (CSS, JS, hình ảnh)
 │   │   ├── application.properties        # File cấu hình ứng dụng                 
 ```
 
