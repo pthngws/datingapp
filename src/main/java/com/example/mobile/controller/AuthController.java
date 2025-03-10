@@ -1,8 +1,6 @@
 package com.example.mobile.controller;
 
-import com.example.mobile.dto.request.IntrospectDto;
-import com.example.mobile.dto.request.LoginDto;
-import com.example.mobile.dto.request.SignUpDto;
+import com.example.mobile.dto.request.*;
 import com.example.mobile.dto.response.ApiResponse;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.model.User;
@@ -53,8 +51,8 @@ public class AuthController {
 
     @Operation(summary = "Quên mật khẩu", description = "Gửi OTP đến email của người dùng")
     @PostMapping("/forgot-password")
-    public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody ForgotPassWordDto forgotPasswordDto) {
+        String email = forgotPasswordDto.getEmail();
         if (email == null || email.isEmpty()) {
             ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Email không hợp lệ.", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -66,10 +64,10 @@ public class AuthController {
 
     @Operation(summary = "Đặt lại mật khẩu", description = "Người dùng đặt lại mật khẩu bằng OTP đã nhận")
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String otp = request.get("otp");
-        String newPassword = request.get("newPassword");
+    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody ResetPassWordDto resetPasswordDto) {
+        String email = resetPasswordDto.getEmail();
+        String otp = resetPasswordDto.getOtp();
+        String newPassword = resetPasswordDto.getNewPassword();
 
         if (email == null || otp == null || newPassword == null) {
             ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Dữ liệu không hợp lệ.", null);
