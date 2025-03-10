@@ -13,6 +13,8 @@ public interface IAuthenticateService {
 
     String generateToken(User userEntity) throws JOSEException;
 
+    String generateRefreshToken(User userEntity);
+
     UserResponse login(LoginDto loginRequestDto) throws JOSEException;
 
     User signup(User user);

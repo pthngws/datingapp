@@ -7,7 +7,6 @@ import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
 import com.example.mobile.model.*;
 import com.example.mobile.repository.ProfileRepository;
-import com.example.mobile.repository.RefreshTokenRepository;
 import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IAuthenticateService;
 import com.example.mobile.service.IUserService;
@@ -57,7 +56,7 @@ public class AuthenticateService implements IAuthenticateService {
     private UserRepository userRepository;
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private RefreshTokenService refreshTokenService;
 
     @Autowired
     private IUserService userService;
@@ -95,16 +94,14 @@ public class AuthenticateService implements IAuthenticateService {
         return jwsObject.serialize();
     }
 
+    @Override
     public String generateRefreshToken(User userEntity) {
         byte[] randomBytes = new byte[32];
         secureRandom.nextBytes(randomBytes);
         String refreshToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
 
-        RefreshToken rt = new RefreshToken();
-        rt.setUserId(userEntity.getId());
-        rt.setToken(refreshToken);
-        rt.setExpirationDate(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
-        refreshTokenRepository.save(rt);
+        long refreshTokenTTL = 7 * 24 * 60 * 60; // 7 ngày
+        refreshTokenService.saveRefreshToken(userEntity.getId(), refreshToken, refreshTokenTTL);
 
         return refreshToken;
     }
@@ -165,14 +162,26 @@ public class AuthenticateService implements IAuthenticateService {
 
     @Override
     public String refreshAccessToken(String refreshToken) throws JOSEException {
-        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
-        if (!storedToken.getExpirationDate().after(new Date())) {
-            throw new AppException(ErrorCode.REFRESH_TOKEN_EXPIRED);
+        String userId = getUserIdFromRefreshToken(refreshToken);
+        if (userId == null) {
+            throw new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
-        User user = userRepository.findById(storedToken.getUserId())
+
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+
         return generateToken(user);
+    }
+
+    private String getUserIdFromRefreshToken(String refreshToken) {
+        // Duyệt qua tất cả user để tìm refresh token (Không tối ưu)
+        for (User user : userRepository.findAll()) {
+            String storedToken = refreshTokenService.getRefreshToken(user.getId());
+            if (refreshToken.equals(storedToken)) {
+                return user.getId();
+            }
+        }
+        return null;
     }
 
     @Override
@@ -182,6 +191,6 @@ public class AuthenticateService implements IAuthenticateService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         String userId = authentication.getName();
-        refreshTokenRepository.deleteByUserId(userId);
+        refreshTokenService.deleteRefreshToken(userId);
     }
 }
