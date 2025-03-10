@@ -2,82 +2,91 @@
 
 ## Mục Lục
 - [Giới Thiệu](#giới-thiệu)
+- [Công Nghệ Sử Dụng](#công-nghệ-sử-dụng)
 - [Cài Đặt](#cài-đặt)
-  - [Cài Đặt Spring Boot](#cài-đặt-spring-boot)
-  - [Cài Đặt Cơ Sở Dữ Liệu MongoDB](#cài-đặt-cơ-sở-dữ-liệu-mongodb)
-  - [Cấu Hình Redis](#cấu-hình-redis)
+  - [Cấu Hình Ứng Dụng](#cấu-hình-ứng-dụng)
+  - [Chạy Ứng Dụng](#chạy-ứng-dụng)
 - [Các Chức Năng](#các-chức-năng)
 - [Cấu Trúc Dự Án](#cấu-trúc-dự-án)
 - [Yêu Cầu Hệ Thống](#yêu-cầu-hệ-thống)
-- [Cảm Ơn](#cảm-ơn)
+- [Liên Hệ & Đóng Góp](#liên-hệ--đóng-góp)
 
 ## Giới Thiệu
+Ứng dụng hẹn hò này được phát triển nhằm tạo ra một nền tảng giúp người dùng có thể kết nối và tìm kiếm đối tượng phù hợp. Với hệ thống gợi ý thông minh, nhắn tin trực tiếp và bảo mật cao, ứng dụng đảm bảo trải nghiệm mượt mà và an toàn cho người dùng.
 
-Đây là một ứng dụng hẹn hò được phát triển bằng **Spring Boot** và **MongoDB**. Ứng dụng cho phép người dùng tạo hồ sơ cá nhân, tìm kiếm và kết nối với những người dùng khác thông qua các tính năng như nhắn tin, gợi ý kết bạn và quản lý mối quan hệ.
+## Công Nghệ Sử Dụng
+- **Backend**: Spring Boot
+- **Database**: MongoDB
+- **Cache**: Redis
+- **Bảo mật**: Spring Security & JWT
+- **Tài liệu API**: Swagger
 
 ## Cài Đặt
 
-### Cài Đặt Spring Boot
+### Cấu Hình Ứng Dụng
+1. Clone repository về máy:
+   ```bash
+   git clone https://github.com/pthngws/datingapp.git
+   cd datingapp
+   ```
+2. Cấu hình MongoDB trong `application.properties`:
+   ```properties
+   spring.data.mongodb.uri=mongodb://localhost:27017/datingapp
+   jwt.secret=your_jwt_secret
+   ```
+3. Cấu hình Redis (nếu sử dụng):
+   ```properties
+   spring.redis.host=localhost
+   spring.redis.port=6379
+   ```
 
-Clone repository về máy:
-
+### Chạy Ứng Dụng
+Chạy ứng dụng bằng Maven:
 ```bash
-git clone https://github.com/pthngws/datingapp.git
-cd datingapp
+mvn spring-boot:run
 ```
 
-Cài đặt các phụ thuộc bằng Maven:
-
-```bash
-mvn install
-```
-
-### Cài Đặt Cơ Sở Dữ Liệu MongoDB
-
-1. Cài đặt MongoDB và khởi chạy dịch vụ.
-2. Cấu hình kết nối MongoDB trong file `src/main/resources/application.properties`:
-
-```properties
-spring.data.mongodb.uri=mongodb://localhost:27017/datingapp
-```
-
-### Cấu Hình Redis
-
-Nếu sử dụng Redis để cache dữ liệu, đảm bảo Redis đã được cài đặt và chạy.
-
-Cấu hình trong `application.properties`:
-
-```properties
-spring.redis.host=localhost
-spring.redis.port=6379
-```
+Truy cập Swagger UI tại: `http://localhost:8080/swagger-ui.html`
 
 ## Các Chức Năng
 
-### Đăng Ký & Đăng Nhập
-- Xác thực bằng JWT.
-- Người dùng có thể đăng ký, đăng nhập và quản lý tài khoản.
+### 1. Xác Thực & Quản Lý Người Dùng
+- Đăng ký, đăng nhập bằng JWT.
+- Cập nhật thông tin cá nhân.
 
-### Quản Lý Hồ Sơ Cá Nhân
-- Cập nhật ảnh đại diện, thông tin cá nhân.
+### 2. Gợi Ý Kết Nối
+- Gợi ý đối tượng dựa trên bộ lọc.
 
-### Gợi Ý Kết Bạn
-- Hệ thống đề xuất dựa trên sở thích và vị trí.
+### 3. Hệ Thống Nhắn Tin
+- Nhắn tin thời gian thực giữa các người dùng.
+- Lưu trữ lịch sử trò chuyện.
 
-### Nhắn Tin
-- Hỗ trợ chat thời gian thực giữa các người dùng.
+### 4. Like & Match
+- Người dùng có thể thích hoặc bỏ qua hồ sơ khác.
+- Khi cả hai cùng thích, hệ thống tạo kết nối "match".
 
-### Like & Match
-- Người dùng có thể thích hoặc bỏ qua hồ sơ gợi ý.
+## Cấu Trúc Dự Án
+```
+src/
+├── main/
+│   ├── java/com/example/mobile/       # Backend logic (Controllers, Services, Repositories)
+│   ├── resources/
+│   │   ├── templates/                    # Giao diện người dùng (HTML)
+│   │   ├── static/                       # File tĩnh (CSS, JS, hình ảnh)
+│   │   ├── application.properties        # File cấu hình ứng dụng                 
+```
 
 ## Yêu Cầu Hệ Thống
+- **Java**: 17+
+- **MongoDB**: 4.4+
+- **Maven**: 4+
+- **Redis**: (khuyến khích, để tối ưu hiệu suất)
+- **Docker**: (tùy chọn, giúp triển khai dễ dàng hơn)
 
-- **Java**: Phiên bản 17 trở lên.
-- **MongoDB**: Phiên bản 4.4 trở lên.
-- **Maven**: Phiên bản 3.6 trở lên.
-- **Redis**: (Tùy chọn) để tối ưu hiệu suất.
+## Liên Hệ & Đóng Góp
+Mọi đóng góp đều được chào đón! Nếu bạn muốn cải thiện dự án này, hãy fork repository và gửi pull request.
 
-## Cảm Ơn
+📩 Liên hệ: pthngws@gmail.com
 
-- Hy vọng bạn sẽ thích dự án này! 🚀
+Hy vọng bạn sẽ thích dự án này! 🚀
 
