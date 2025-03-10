@@ -9,14 +9,15 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDto {
+public class UserResponse {
     private String id;
     private String username;
     private String email;
     private Role role;
     private String token;
+    private String refreshToken;
 
-    public UserDto(User user) {
+    public UserResponse(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();

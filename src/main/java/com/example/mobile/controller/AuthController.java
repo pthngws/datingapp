@@ -1,110 +1,91 @@
 package com.example.mobile.controller;
 
-
-import com.example.mobile.dto.IntrospectDto;
+import com.example.mobile.dto.request.IntrospectDto;
 import com.example.mobile.dto.request.LoginDto;
 import com.example.mobile.dto.request.SignUpDto;
 import com.example.mobile.dto.response.ApiResponse;
-import com.example.mobile.dto.response.UserDto;
+import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.model.User;
 import com.example.mobile.service.IAuthenticateService;
 import com.nimbusds.jose.JOSEException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Các API liên quan đến xác thực người dùng")
 public class AuthController {
-
 
     @Autowired
     IAuthenticateService authenticateService;
 
+    @Operation(summary = "Đăng ký tài khoản", description = "Tạo tài khoản mới với thông tin username, password, email")
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<User>> signup(@RequestBody SignUpDto signUpDto) {
-        try {
-            User user = new User();
-            user.setUsername(signUpDto.getUsername());
-            user.setPassword(signUpDto.getPassword());
-            user.setEmail(signUpDto.getEmail());
+        User user = new User();
+        user.setUsername(signUpDto.getUsername());
+        user.setPassword(signUpDto.getPassword());
+        user.setEmail(signUpDto.getEmail());
 
-            User savedUser = authenticateService.signup(user);
-
-            ApiResponse<User> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng ký thành công", savedUser);
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException e) {
-            ApiResponse<User> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        } catch (Exception e) {
-            ApiResponse<User> response = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống", null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
+        User savedUser = authenticateService.signup(user);
+        ApiResponse<User> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng ký thành công", savedUser);
+        return ResponseEntity.ok(response);
     }
 
-
+    @Operation(summary = "Đăng nhập", description = "Người dùng đăng nhập với username và password")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserDto>> login(@RequestBody LoginDto loginDto) throws JOSEException {
-        try {
-            UserDto userDto = authenticateService.login(loginDto);
-
-            if (userDto == null) {
-                ApiResponse<UserDto> response = new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Tên đăng nhập hoặc mật khẩu không đúng", null);
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-
-            ApiResponse<UserDto> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập thành công", userDto);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<UserDto> response = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống", null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    public ResponseEntity<ApiResponse<UserResponse>> login(@RequestBody LoginDto loginDto) throws JOSEException {
+        UserResponse userResponse = authenticateService.login(loginDto);
+        if (userResponse == null) {
+            ApiResponse<UserResponse> response = new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Tên đăng nhập hoặc mật khẩu không đúng", null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
+        ApiResponse<UserResponse> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập thành công", userResponse);
+        return ResponseEntity.ok(response);
     }
 
-
-
+    @Operation(summary = "Quên mật khẩu", description = "Gửi OTP đến email của người dùng")
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        if (email != null && !email.isEmpty()) {
-            authenticateService.sendOtp(email);
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "OTP đã được gửi đến email của bạn.", null);
-            return ResponseEntity.ok(response);
+        if (email == null || email.isEmpty()) {
+            ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Email không hợp lệ.", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Email không hợp lệ.", null);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        authenticateService.sendOtp(email);
+        ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "OTP đã được gửi đến email của bạn.", null);
+        return ResponseEntity.ok(response);
     }
 
-
+    @Operation(summary = "Đặt lại mật khẩu", description = "Người dùng đặt lại mật khẩu bằng OTP đã nhận")
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         String otp = request.get("otp");
         String newPassword = request.get("newPassword");
 
-        if (email != null && otp != null && newPassword != null) {
-            boolean success = authenticateService.resetPassword(email, otp, newPassword);
-            if (success) {
-                ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Mật khẩu đã được đặt lại thành công.", null);
-                return ResponseEntity.ok(response);
-            }
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "OTP không hợp lệ hoặc email không tồn tại.", null);
+        if (email == null || otp == null || newPassword == null) {
+            ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Dữ liệu không hợp lệ.", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Dữ liệu không hợp lệ.", null);
+
+        boolean success = authenticateService.resetPassword(email, otp, newPassword);
+        if (success) {
+            ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Mật khẩu đã được đặt lại thành công.", null);
+            return ResponseEntity.ok(response);
+        }
+        ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "OTP không hợp lệ hoặc email không tồn tại.", null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-
+    @Operation(summary = "Kiểm tra token", description = "Xác thực token có hợp lệ hay không")
     @PostMapping("/introspect")
     public ResponseEntity<ApiResponse<String>> introspect(@RequestBody IntrospectDto token) throws JOSEException, ParseException {
         String email = authenticateService.introspectToken(token);
@@ -116,4 +97,28 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @Operation(summary = "Làm mới token", description = "Nhận access token mới bằng refresh token")
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse<String>> refreshToken(@RequestBody Map<String, String> request) throws JOSEException, ParseException {
+        String refreshToken = request.get("refreshToken");
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Refresh token không được cung cấp", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        String newAccessToken = authenticateService.refreshAccessToken(refreshToken);
+        if (newAccessToken != null) {
+            ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Access token mới đã được tạo", newAccessToken);
+            return ResponseEntity.ok(response);
+        }
+        ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Refresh token không hợp lệ hoặc đã hết hạn", null);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @Operation(summary = "Đăng xuất", description = "Xóa refresh token của người dùng")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout() {
+        authenticateService.revokeRefreshToken();
+        ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng xuất thành công", null);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -15,4 +15,5 @@ public class Relationship {
     private String userId2;
 
     private Status status;
+
 }

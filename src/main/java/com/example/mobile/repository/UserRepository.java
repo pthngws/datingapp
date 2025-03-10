@@ -13,4 +13,5 @@ public interface UserRepository extends MongoRepository<User, String> {
     List<User> findByCreateDateAfter(LocalDate date);
     Optional<User> findByEmail(String email);
     boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
 }
