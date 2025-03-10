@@ -32,7 +32,6 @@
 2. Cấu hình MongoDB trong `application.properties`:
    ```properties
    spring.data.mongodb.uri=mongodb://localhost:27017/datingapp
-   jwt.secret=your_jwt_secret
    ```
 3. Cấu hình Redis (nếu sử dụng):
    ```properties
