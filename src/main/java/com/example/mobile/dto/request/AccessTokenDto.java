@@ -3,6 +3,6 @@ package com.example.mobile.dto.request;
 import lombok.Data;
 
 @Data
-public class IntrospectDto {
-    private String token;
+public class AccessTokenDto {
+    private String accessToken;
 }

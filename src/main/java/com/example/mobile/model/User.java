@@ -1,5 +1,7 @@
 package com.example.mobile.model;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -23,5 +25,8 @@ public class User {
     private String status;
     @DBRef(lazy = true)
     private Profile profile;
+
+    @Enumerated(EnumType.STRING)
+    private Provider provider;
 
 }

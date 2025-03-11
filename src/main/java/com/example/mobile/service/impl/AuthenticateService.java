@@ -1,7 +1,8 @@
 package com.example.mobile.service.impl;
 
-import com.example.mobile.dto.request.IntrospectDto;
+import com.example.mobile.dto.request.AccessTokenDto;
 import com.example.mobile.dto.request.LoginDto;
+import com.example.mobile.dto.request.RefreshTokenDto;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -28,10 +30,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
 @Service
 public class AuthenticateService implements IAuthenticateService {
@@ -66,9 +65,9 @@ public class AuthenticateService implements IAuthenticateService {
     PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
-    public String introspectToken(IntrospectDto token) throws JOSEException, ParseException {
+    public String introspectToken(AccessTokenDto token) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SECRET.getBytes());
-        SignedJWT signedJWT = SignedJWT.parse(token.getToken());
+        SignedJWT signedJWT = SignedJWT.parse(token.getAccessToken());
         Date expirationDate = signedJWT.getJWTClaimsSet().getExpirationTime();
         if (signedJWT.verify(verifier) && expirationDate.after(new Date())) {
             return signedJWT.getJWTClaimsSet().getSubject();
@@ -107,6 +106,42 @@ public class AuthenticateService implements IAuthenticateService {
     }
 
     @Override
+    public UserResponse oauth2Login(OidcUser oidcUser) throws JOSEException {
+        if (oidcUser == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        String email = oidcUser.getEmail();
+        String name = oidcUser.getFullName();
+
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        User user;
+
+        if (existingUser.isPresent()) {
+            user = existingUser.get();
+        } else {
+            // Tạo tài khoản mới nếu user chưa có trong DB
+            user = new User();
+            user.setEmail(email);
+            user.setUsername(name.replaceAll("\\s", "").toLowerCase());
+            user.setRole(Role.USER);
+            user.setProvider(Provider.GOOGLE);
+            user.setCreateDate(LocalDate.now());
+            Profile profile = new Profile();
+            profile.setAddress(new Address());
+            user.setProfile(profileRepository.save(profile));
+            user = userRepository.save(user);
+        }
+
+        // Tạo token
+        String accessToken = generateToken(user);
+        String refreshToken = generateRefreshToken(user);
+
+        return new UserResponse(user, accessToken, refreshToken);
+    }
+
+
+    @Override
     public UserResponse login(LoginDto loginRequestDto) throws JOSEException {
         User user = userService.findByUsername(loginRequestDto.getUsername());
         if (user == null || !passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
@@ -131,6 +166,7 @@ public class AuthenticateService implements IAuthenticateService {
         user.setCreateDate(LocalDate.now());
         user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setProvider(Provider.LOCAL);
         Profile profile = new Profile();
         profile.setAddress(new Address());
         user.setProfile(profileRepository.save(profile));
@@ -161,7 +197,7 @@ public class AuthenticateService implements IAuthenticateService {
     }
 
     @Override
-    public String refreshAccessToken(String refreshToken) throws JOSEException {
+    public String refreshAccessToken(RefreshTokenDto refreshToken) throws JOSEException {
         String userId = getUserIdFromRefreshToken(refreshToken);
         if (userId == null) {
             throw new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
@@ -173,11 +209,11 @@ public class AuthenticateService implements IAuthenticateService {
         return generateToken(user);
     }
 
-    private String getUserIdFromRefreshToken(String refreshToken) {
+    private String getUserIdFromRefreshToken(RefreshTokenDto refreshToken) {
         // Duyệt qua tất cả user để tìm refresh token (Không tối ưu)
         for (User user : userRepository.findAll()) {
             String storedToken = refreshTokenService.getRefreshToken(user.getId());
-            if (refreshToken.equals(storedToken)) {
+            if (refreshToken.getRefreshToken().equals(storedToken)) {
                 return user.getId();
             }
         }

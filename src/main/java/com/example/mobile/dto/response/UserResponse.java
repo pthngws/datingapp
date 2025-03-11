@@ -23,4 +23,13 @@ public class UserResponse {
         this.email = user.getEmail();
         this.role = user.getRole();
     }
+
+    public UserResponse(User user,String token,String refreshToken) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.email = user.getEmail();
+        this.role = user.getRole();
+        this.refreshToken = refreshToken;
+        this.token = token;
+    }
 }
