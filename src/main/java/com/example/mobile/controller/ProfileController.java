@@ -1,9 +1,10 @@
 package com.example.mobile.controller;
 
+import com.example.mobile.dto.request.ProfileUpdateDTO;
 import com.example.mobile.dto.response.ApiResponse;
-import com.example.mobile.model.enums.Gender;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
+import com.example.mobile.model.enums.Gender;
 import com.example.mobile.service.IProfileService;
 import com.example.mobile.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +59,7 @@ public class ProfileController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<ApiResponse<Profile>> updateProfile(@RequestBody Profile updatedProfile) {
+    public ResponseEntity<ApiResponse<Profile>> updateProfile(@RequestBody ProfileUpdateDTO updatedProfile) {
         try {
             // Lấy ID từ token
             var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -87,9 +88,6 @@ public class ProfileController {
             Profile profile = profileService.updateProfile(profileId, updatedProfile); // Cập nhật profile
 
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Cập nhật profile thành công", profile));
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "ID trong token không hợp lệ", null));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage(), null));
