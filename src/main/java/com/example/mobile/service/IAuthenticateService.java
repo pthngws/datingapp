@@ -7,6 +7,7 @@ import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.model.User;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.text.ParseException;
 
@@ -17,7 +18,8 @@ public interface IAuthenticateService {
 
     String generateRefreshToken(User userEntity);
 
-    UserResponse oauth2Login(OidcUser oidcUser) throws JOSEException;
+
+    UserResponse oauth2Login(OidcUser oidcUser, OAuth2User oAuth2User) throws JOSEException;
 
     UserResponse login(LoginDto loginRequestDto) throws JOSEException;
 

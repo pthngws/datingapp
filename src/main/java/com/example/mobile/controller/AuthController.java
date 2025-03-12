@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
@@ -56,20 +57,20 @@ public class AuthController {
 
     @Operation(summary = "Đăng nhập Google", description = "Người dùng đăng nhập bằng Google OAuth2")
     @GetMapping("/oauth2-login")
-    public ResponseEntity<ApiResponse<UserResponse>> oauth2Login(@AuthenticationPrincipal OidcUser oidcUser) throws JOSEException {
-        if (oidcUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Người dùng chưa đăng nhập", null)
-            );
-        }
-        UserResponse userResponse = authenticateService.oauth2Login(oidcUser);
+    public ResponseEntity<ApiResponse<UserResponse>> oauth2Login(
+            @AuthenticationPrincipal OidcUser oidcUser,
+            @AuthenticationPrincipal OAuth2User oAuth2User) throws JOSEException {
+
+        UserResponse userResponse = authenticateService.oauth2Login(oidcUser, oAuth2User);
         if (userResponse == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Không thể xác thực bằng Google", null)
+                    new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Không thể xác thực bằng Google hoặc Facebook", null)
             );
         }
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập Google thành công", userResponse));
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập thành công", userResponse));
     }
+
+
 
     @Operation(summary = "Đăng xuất", description = "Xóa refresh token của người dùng")
     @PostMapping("/logout")

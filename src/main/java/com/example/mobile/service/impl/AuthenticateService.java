@@ -6,7 +6,9 @@ import com.example.mobile.dto.request.RefreshTokenDto;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
-import com.example.mobile.model.*;
+import com.example.mobile.model.Address;
+import com.example.mobile.model.Profile;
+import com.example.mobile.model.User;
 import com.example.mobile.model.enums.Provider;
 import com.example.mobile.model.enums.Role;
 import com.example.mobile.repository.ProfileRepository;
@@ -25,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -108,39 +111,46 @@ public class AuthenticateService implements IAuthenticateService {
     }
 
     @Override
-    public UserResponse oauth2Login(OidcUser oidcUser) throws JOSEException {
-        if (oidcUser == null) {
+    public UserResponse oauth2Login(OidcUser oidcUser, OAuth2User oAuth2User) throws JOSEException {
+        if (oidcUser == null && oAuth2User == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        String email = oidcUser.getEmail();
-        String name = oidcUser.getFullName();
-
-        Optional<User> existingUser = userRepository.findByEmail(email);
-        User user;
-
-        if (existingUser.isPresent()) {
-            user = existingUser.get();
+        String email, name, provider;
+        if (oidcUser != null) {
+            // Xác thực Google
+            email = oidcUser.getEmail();
+            name = oidcUser.getFullName();
+            provider = "GOOGLE";
         } else {
-            // Tạo tài khoản mới nếu user chưa có trong DB
-            user = new User();
-            user.setEmail(email);
-            user.setUsername(name.replaceAll("\\s", "").toLowerCase());
-            user.setRole(Role.USER);
-            user.setProvider(Provider.GOOGLE);
-            user.setCreateDate(LocalDate.now());
-            Profile profile = new Profile();
-            profile.setAddress(new Address());
-            user.setProfile(profileRepository.save(profile));
-            user = userRepository.save(user);
+            // Xác thực Facebook
+            email = oAuth2User.getAttribute("email");
+            name = oAuth2User.getAttribute("name");
+            provider = "FACEBOOK";
         }
 
-        // Tạo token
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        User user = existingUser.orElseGet(() -> {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUsername(name.replaceAll("\\s", "").toLowerCase());
+            newUser.setRole(Role.USER);
+            newUser.setProvider(provider.equals("FACEBOOK") ? Provider.FACEBOOK : Provider.GOOGLE);
+            newUser.setCreateDate(LocalDate.now());
+
+            Profile profile = new Profile();
+            profile.setAddress(new Address());
+            newUser.setProfile(profileRepository.save(profile));
+
+            return userRepository.save(newUser);
+        });
+
         String accessToken = generateToken(user);
         String refreshToken = generateRefreshToken(user);
 
         return new UserResponse(user, accessToken, refreshToken);
     }
+
 
 
     @Override
