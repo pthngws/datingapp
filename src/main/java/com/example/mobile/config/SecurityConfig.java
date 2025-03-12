@@ -1,12 +1,10 @@
 package com.example.mobile.config;
 
+import com.example.mobile.service.impl.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -22,29 +20,33 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",
-            "/webjars/**"
+            "/webjars/**",
+            "/api/auth/oauth2-login"
     };
     private final String[] ADMIN_ENDPOINTS = { "/api/admin/**" };
     private final String[] USER_ENDPOINTS = { };
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtDecoder jwtDecoder, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
-        httpSecurity
-                .authorizeHttpRequests(request -> request
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                         .requestMatchers(USER_ENDPOINTS).hasRole("USER")
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.decoder(jwtDecoder).jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                        .anyRequest().authenticated()
+                )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/api/auth/oauth2-login", true) // Điều hướng sau khi login thành công
-                        .userInfoEndpoint(userInfo -> userInfo.oidcUserService(new OidcUserService()))
+                        .defaultSuccessUrl("/api/auth/oauth2-login", true)
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(new CustomOAuth2UserService()) // Hỗ trợ cả Google và Facebook
+                        )
                 )
                 .csrf(AbstractHttpConfigurer::disable);
 
-        return httpSecurity.build();
+        return http.build();
     }
+
+
 }
 
 
