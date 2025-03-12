@@ -7,6 +7,8 @@ import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
 import com.example.mobile.model.*;
+import com.example.mobile.model.enums.Provider;
+import com.example.mobile.model.enums.Role;
 import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IAuthenticateService;

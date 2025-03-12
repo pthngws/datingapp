@@ -1,6 +1,6 @@
 package com.example.mobile.repository;
 
-import com.example.mobile.model.Gender;
+import com.example.mobile.model.enums.Gender;
 import com.example.mobile.model.Profile;
 
 import java.util.List;

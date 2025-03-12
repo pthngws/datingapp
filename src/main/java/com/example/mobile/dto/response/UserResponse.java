@@ -1,6 +1,6 @@
 package com.example.mobile.dto.response;
 
-import com.example.mobile.model.Role;
+import com.example.mobile.model.enums.Role;
 import com.example.mobile.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;

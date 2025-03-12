@@ -1,4 +1,4 @@
-package com.example.mobile.model;
+package com.example.mobile.model.enums;
 
 public enum Type {
     MATCH,

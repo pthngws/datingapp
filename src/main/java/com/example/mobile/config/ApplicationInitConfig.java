@@ -1,6 +1,6 @@
 package com.example.mobile.config;
 
-import com.example.mobile.model.Role;
+import com.example.mobile.model.enums.Role;
 import com.example.mobile.model.User;
 import com.example.mobile.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;

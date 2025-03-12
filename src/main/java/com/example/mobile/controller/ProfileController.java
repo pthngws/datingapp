@@ -1,7 +1,7 @@
 package com.example.mobile.controller;
 
 import com.example.mobile.dto.response.ApiResponse;
-import com.example.mobile.model.Gender;
+import com.example.mobile.model.enums.Gender;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
 import com.example.mobile.service.IProfileService;

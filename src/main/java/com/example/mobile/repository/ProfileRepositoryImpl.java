@@ -1,6 +1,6 @@
 package com.example.mobile.repository;
 
-import com.example.mobile.model.Gender;
+import com.example.mobile.model.enums.Gender;
 import com.example.mobile.model.Profile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;

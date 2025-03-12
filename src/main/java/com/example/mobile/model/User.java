@@ -1,5 +1,7 @@
 package com.example.mobile.model;
 
+import com.example.mobile.model.enums.Provider;
+import com.example.mobile.model.enums.Role;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Data;
