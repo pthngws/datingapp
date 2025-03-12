@@ -12,12 +12,13 @@ import java.util.List;
 public class Profile {
     @Id
     private String id;
-
-    private String userID;
+    private String firstName;
+    private String lastName;
     private List<Photo> photos;
     private List<Hobbies> hobbies;
     private Gender gender;
     private int age;
+    private int height;
     private Address address;
     private String bio;
     private ZodiacSign zodiacSign;
