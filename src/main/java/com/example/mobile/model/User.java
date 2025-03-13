@@ -1,7 +1,9 @@
 package com.example.mobile.model;
 
+import com.example.mobile.model.enums.AccoutStatus;
 import com.example.mobile.model.enums.Provider;
 import com.example.mobile.model.enums.Role;
+import com.example.mobile.model.enums.SubscriptionStatus;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Data;
@@ -24,11 +26,15 @@ public class User {
     private String email;
     private LocalDate createDate;
     private Role role;
-    private String status;
+    private AccoutStatus accoutStatus;
     @DBRef(lazy = true)
     private Profile profile;
 
     @Enumerated(EnumType.STRING)
     private Provider provider;
+
+    private SubscriptionStatus subscriptionStatus;
+
+
 
 }

@@ -1,6 +1,6 @@
 package com.example.mobile.model;
 
-import com.example.mobile.model.enums.Status;
+import com.example.mobile.model.enums.RelationshipStatus;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,6 +15,6 @@ public class Relationship {
 
     private String userId2;
 
-    private Status status;
+    private RelationshipStatus status;
 
 }

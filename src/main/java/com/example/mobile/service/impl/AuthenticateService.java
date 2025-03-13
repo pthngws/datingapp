@@ -10,8 +10,10 @@ import com.example.mobile.model.Address;
 import com.example.mobile.model.Album;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
+import com.example.mobile.model.enums.AccoutStatus;
 import com.example.mobile.model.enums.Provider;
 import com.example.mobile.model.enums.Role;
+import com.example.mobile.model.enums.SubscriptionStatus;
 import com.example.mobile.repository.AddressRepository;
 import com.example.mobile.repository.AlbumRepository;
 import com.example.mobile.repository.ProfileRepository;
@@ -146,7 +148,8 @@ public class AuthenticateService implements IAuthenticateService {
             newUser.setRole(Role.USER);
             newUser.setProvider(provider.equals("FACEBOOK") ? Provider.FACEBOOK : Provider.GOOGLE);
             newUser.setCreateDate(LocalDate.now());
-
+            newUser.setAccoutStatus(AccoutStatus.ACTIVE);
+            newUser.setSubscriptionStatus(SubscriptionStatus.FREE);
             Profile profile = new Profile();
             Address address = new Address();
             addressRepository.save(address);
@@ -158,7 +161,9 @@ public class AuthenticateService implements IAuthenticateService {
 
             return userRepository.save(newUser);
         });
-
+        if(user.getAccoutStatus() != AccoutStatus.ACTIVE) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
         String accessToken = generateToken(user);
         String refreshToken = generateRefreshToken(user);
 
@@ -172,6 +177,9 @@ public class AuthenticateService implements IAuthenticateService {
         User user = userService.findByUsername(loginRequestDto.getUsername());
         if (user == null || !passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.USER_NOT_EXIST);
+        }
+        if (user.getAccoutStatus() != AccoutStatus.ACTIVE) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         String accessToken = this.generateToken(user);
         String refreshToken = this.generateRefreshToken(user);
@@ -193,9 +201,13 @@ public class AuthenticateService implements IAuthenticateService {
         user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setProvider(Provider.LOCAL);
+        user.setAccoutStatus(AccoutStatus.ACTIVE);
+        user.setSubscriptionStatus(SubscriptionStatus.FREE);
         Profile profile = new Profile();
         Address address = new Address();
+        addressRepository.save(address);
         Album album = new Album();
+        albumRepository.save(album);
         profile.setAddress(address);
         profile.setAlbum(album);
         user.setProfile(profileRepository.save(profile));

@@ -1,6 +1,6 @@
 package com.example.mobile.model.enums;
 
-public enum Status {
+public enum RelationshipStatus {
     BLOCKED,
     MATCHED,
     SKIPPED,
