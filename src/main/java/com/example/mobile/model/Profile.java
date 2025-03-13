@@ -3,6 +3,7 @@ package com.example.mobile.model;
 import com.example.mobile.model.enums.*;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -14,11 +15,13 @@ public class Profile {
     private String id;
     private String firstName;
     private String lastName;
-    private List<Photo> photos;
+    @DBRef(lazy = true)
+    private Album album;
     private List<Hobbies> hobbies;
     private Gender gender;
     private int age;
     private int height;
+    @DBRef(lazy = true)
     private Address address;
     private String bio;
     private ZodiacSign zodiacSign;

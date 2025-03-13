@@ -2,16 +2,21 @@ package com.example.mobile.controller;
 
 import com.example.mobile.dto.request.ProfileUpdateDTO;
 import com.example.mobile.dto.response.ApiResponse;
+import com.example.mobile.model.Album;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
 import com.example.mobile.model.enums.Gender;
+import com.example.mobile.service.IImageUploadService;
 import com.example.mobile.service.IProfileService;
 import com.example.mobile.service.IUserService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,6 +28,25 @@ public class ProfileController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private IImageUploadService imageUploadService;
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload multiple images")
+    public ResponseEntity<?> uploadImages(
+            @RequestPart("files") MultipartFile[] files) {
+        try {
+            Album userImages = imageUploadService.uploadImages(files);
+            return ResponseEntity.ok(userImages);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Upload failed: " + e.getMessage());
+        }
+    }
+
+
+
+
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<Profile>>> searchProfiles(

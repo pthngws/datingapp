@@ -7,10 +7,13 @@ import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
 import com.example.mobile.model.Address;
+import com.example.mobile.model.Album;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
 import com.example.mobile.model.enums.Provider;
 import com.example.mobile.model.enums.Role;
+import com.example.mobile.repository.AddressRepository;
+import com.example.mobile.repository.AlbumRepository;
 import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IAuthenticateService;
@@ -64,6 +67,12 @@ public class AuthenticateService implements IAuthenticateService {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private AddressRepository addressRepository;
+
+    @Autowired
+    private AlbumRepository albumRepository;
 
     private static final SecureRandom secureRandom = new SecureRandom();
 
@@ -139,7 +148,12 @@ public class AuthenticateService implements IAuthenticateService {
             newUser.setCreateDate(LocalDate.now());
 
             Profile profile = new Profile();
-            profile.setAddress(new Address());
+            Address address = new Address();
+            addressRepository.save(address);
+            Album album = new Album();
+            albumRepository.save(album);
+            profile.setAddress(address);
+            profile.setAlbum(album);
             newUser.setProfile(profileRepository.save(profile));
 
             return userRepository.save(newUser);
@@ -180,7 +194,10 @@ public class AuthenticateService implements IAuthenticateService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setProvider(Provider.LOCAL);
         Profile profile = new Profile();
-        profile.setAddress(new Address());
+        Address address = new Address();
+        Album album = new Album();
+        profile.setAddress(address);
+        profile.setAlbum(album);
         user.setProfile(profileRepository.save(profile));
         return userRepository.save(user);
     }

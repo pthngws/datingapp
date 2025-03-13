@@ -55,7 +55,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Đăng nhập Google", description = "Người dùng đăng nhập bằng Google OAuth2")
+    @Operation(summary = "Đăng nhập Google hoặc Facebook", description = "Người dùng đăng nhập bằng Google hoặc Facebook OAuth2")
     @GetMapping("/oauth2-login")
     public ResponseEntity<ApiResponse<UserResponse>> oauth2Login(
             @AuthenticationPrincipal OidcUser oidcUser,
