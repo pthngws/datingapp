@@ -2,13 +2,14 @@ package com.example.mobile.model;
 
 import jakarta.persistence.Id;
 import lombok.Data;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @Document(collection = "album")
 public class Album {
     @Id
-    private String id;
+    private ObjectId id;
 
     private String pic1;
     private String pic2;

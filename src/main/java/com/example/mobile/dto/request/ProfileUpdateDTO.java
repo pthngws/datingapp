@@ -1,6 +1,5 @@
 package com.example.mobile.dto.request;
 
-import com.example.mobile.model.Address;
 import com.example.mobile.model.enums.*;
 import lombok.Data;
 
@@ -14,7 +13,6 @@ public class ProfileUpdateDTO {
     private Gender gender;
     private Integer age;
     private Integer height;
-    private Address address;
     private String bio;
     private ZodiacSign zodiacSign;
     private PersonalityType personalityType;

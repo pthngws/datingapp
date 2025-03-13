@@ -26,6 +26,7 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.experimental.NonFinal;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -96,7 +97,7 @@ public class AuthenticateService implements IAuthenticateService {
     public String generateToken(User userEntity) throws JOSEException {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(userEntity.getId())
+                .subject(String.valueOf(userEntity.getId()))
                 .claim("role", "ROLE_" + userEntity.getRole())
                 .issuer(ISSUER)
                 .issueTime(new Date())
@@ -147,21 +148,22 @@ public class AuthenticateService implements IAuthenticateService {
             newUser.setUsername(name.replaceAll("\\s", "").toLowerCase());
             newUser.setRole(Role.USER);
             newUser.setProvider(provider.equals("FACEBOOK") ? Provider.FACEBOOK : Provider.GOOGLE);
-            newUser.setCreateDate(LocalDate.now());
-            newUser.setAccoutStatus(AccoutStatus.ACTIVE);
+            newUser.setCreateAt(LocalDate.now());
+            newUser.setAccountStatus(AccoutStatus.ACTIVE);
             newUser.setSubscriptionStatus(SubscriptionStatus.FREE);
             Profile profile = new Profile();
             Address address = new Address();
             addressRepository.save(address);
             Album album = new Album();
             albumRepository.save(album);
-            profile.setAddress(address);
-            profile.setAlbum(album);
-            newUser.setProfile(profileRepository.save(profile));
+            profile.setAddressId(address.getId());
+            profile.setAlbumId(album.getId());
+            profileRepository.save(profile);
+            newUser.setProfileId(profile.getId());
 
             return userRepository.save(newUser);
         });
-        if(user.getAccoutStatus() != AccoutStatus.ACTIVE) {
+        if(user.getAccountStatus() != AccoutStatus.ACTIVE) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         String accessToken = generateToken(user);
@@ -178,7 +180,7 @@ public class AuthenticateService implements IAuthenticateService {
         if (user == null || !passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.USER_NOT_EXIST);
         }
-        if (user.getAccoutStatus() != AccoutStatus.ACTIVE) {
+        if (user.getAccountStatus() != AccoutStatus.ACTIVE) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         String accessToken = this.generateToken(user);
@@ -197,20 +199,21 @@ public class AuthenticateService implements IAuthenticateService {
         if (userRepository.existsByEmail(user.getEmail())) { // Giả định có phương thức này
             throw new AppException(ErrorCode.EMAIL_EXIST_REGISTER);
         }
-        user.setCreateDate(LocalDate.now());
+        user.setCreateAt(LocalDate.now());
         user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setProvider(Provider.LOCAL);
-        user.setAccoutStatus(AccoutStatus.ACTIVE);
+        user.setAccountStatus(AccoutStatus.ACTIVE);
         user.setSubscriptionStatus(SubscriptionStatus.FREE);
         Profile profile = new Profile();
         Address address = new Address();
         addressRepository.save(address);
         Album album = new Album();
         albumRepository.save(album);
-        profile.setAddress(address);
-        profile.setAlbum(album);
-        user.setProfile(profileRepository.save(profile));
+        profile.setAddressId(address.getId());
+        profile.setAlbumId(album.getId());
+        profileRepository.save(profile);
+        user.setProfileId(profile.getId());
         return userRepository.save(user);
     }
 
@@ -239,7 +242,7 @@ public class AuthenticateService implements IAuthenticateService {
 
     @Override
     public String refreshAccessToken(RefreshTokenDto refreshToken) throws JOSEException {
-        String userId = getUserIdFromRefreshToken(refreshToken);
+        ObjectId userId = getUserIdFromRefreshToken(refreshToken);
         if (userId == null) {
             throw new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
@@ -250,7 +253,7 @@ public class AuthenticateService implements IAuthenticateService {
         return generateToken(user);
     }
 
-    private String getUserIdFromRefreshToken(RefreshTokenDto refreshToken) {
+    private ObjectId getUserIdFromRefreshToken(RefreshTokenDto refreshToken) {
         // Duyệt qua tất cả user để tìm refresh token (Không tối ưu)
         for (User user : userRepository.findAll()) {
             String storedToken = refreshTokenService.getRefreshToken(user.getId());
@@ -267,7 +270,7 @@ public class AuthenticateService implements IAuthenticateService {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        String userId = authentication.getName();
+        ObjectId userId = new ObjectId(authentication.getName());
         refreshTokenService.deleteRefreshToken(userId);
     }
 }

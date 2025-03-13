@@ -1,6 +1,7 @@
 package com.example.mobile.service;
 
 import com.example.mobile.model.User;
+import org.bson.types.ObjectId;
 
 import java.util.List;
 
@@ -9,5 +10,5 @@ public interface IUserService {
 
     User findByUsername(String username);
 
-    User findUserById(String id);
+    User findUserById(ObjectId id);
 }

@@ -1,16 +1,17 @@
 package com.example.mobile.dto.response;
 
-import com.example.mobile.model.enums.Role;
 import com.example.mobile.model.User;
+import com.example.mobile.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.bson.types.ObjectId;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserResponse {
-    private String id;
+    private ObjectId id;
     private String username;
     private String email;
     private Role role;

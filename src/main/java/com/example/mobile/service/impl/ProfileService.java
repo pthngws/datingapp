@@ -5,6 +5,7 @@ import com.example.mobile.model.Profile;
 import com.example.mobile.model.enums.Gender;
 import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.service.IProfileService;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +17,9 @@ public class ProfileService implements IProfileService {
     @Autowired
     private ProfileRepository profileRepository;
 
+
     @Override
-    public Profile updateProfile(String id, ProfileUpdateDTO dto) {
+    public Profile updateProfile(ObjectId id, ProfileUpdateDTO dto) {
         Optional<Profile> optionalProfile = profileRepository.findById(id);
 
         if (optionalProfile.isEmpty()) {
@@ -43,9 +45,6 @@ public class ProfileService implements IProfileService {
         }
         if (dto.getHeight() != null && dto.getHeight() > 0) {
             existingProfile.setHeight(dto.getHeight());
-        }
-        if (dto.getAddress() != null) {
-            existingProfile.setAddress(dto.getAddress());
         }
         if (dto.getBio() != null) {
             existingProfile.setBio(dto.getBio());

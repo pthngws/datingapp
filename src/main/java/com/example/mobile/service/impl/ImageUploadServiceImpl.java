@@ -2,10 +2,16 @@ package com.example.mobile.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.mobile.exception.AppException;
+import com.example.mobile.exception.ErrorCode;
 import com.example.mobile.model.Album;
+import com.example.mobile.model.Profile;
+import com.example.mobile.model.User;
 import com.example.mobile.repository.AlbumRepository;
+import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IImageUploadService;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,6 +34,9 @@ public class ImageUploadServiceImpl implements IImageUploadService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ProfileRepository profileRepository;
+
     @Override
     public String uploadSingleImage(MultipartFile file) throws IOException {
         Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
@@ -38,10 +47,19 @@ public class ImageUploadServiceImpl implements IImageUploadService {
     public Album uploadImages(MultipartFile[] files) throws IOException {
         // Lấy userId từ token
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = authentication.getName();
+        ObjectId userId = new ObjectId(authentication.getName()); // Chuyển String thành ObjectId
 
-        // Tìm thông tin ảnh hiện tại của user
-        Album userImages = userRepository.findById(userId).get().getProfile().getAlbum();
+        // Tìm user, nếu không có thì báo lỗi
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+
+        // Kiểm tra profile của user
+        Profile profile = profileRepository.findById(user.getProfileId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+
+        // Kiểm tra album của profile
+        Album userImages = albumRepository.findById(profile.getAlbumId())
+                .orElseGet(() -> new Album()); // Nếu chưa có album thì tạo mới
 
         // Mảng chứa đường dẫn ảnh
         String[] imageFields = {
@@ -82,6 +100,8 @@ public class ImageUploadServiceImpl implements IImageUploadService {
         userImages.setPic8(imageFields[7]);
         userImages.setPic9(imageFields[8]);
 
+        // Lưu lại album
         return albumRepository.save(userImages);
     }
+
 }

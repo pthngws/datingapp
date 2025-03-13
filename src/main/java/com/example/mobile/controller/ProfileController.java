@@ -10,6 +10,7 @@ import com.example.mobile.service.IImageUploadService;
 import com.example.mobile.service.IProfileService;
 import com.example.mobile.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -87,14 +88,9 @@ public class ProfileController {
         try {
             // Lấy ID từ token
             var authentication = SecurityContextHolder.getContext().getAuthentication();
-            String userId = authentication.getName();  // userId lưu trong "sub" của token
+            ObjectId userId = new ObjectId(authentication.getName());  // userId lưu trong "sub" của token
 
-            if (userId == null || userId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Không tìm thấy ID từ token", null));
-            }
-
-            // Tìm User theo userId
+            // Lấy profile từ user
             User user = userService.findUserById(userId);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -102,14 +98,12 @@ public class ProfileController {
             }
 
             // Lấy profile từ user
-            if (user.getProfile() == null) {
+            if (user.getProfileId() == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Không tìm thấy Profile của user", null));
             }
 
-            // Cập nhật profile
-            String profileId = user.getProfile().getId(); // Lấy ID của Profile
-            Profile profile = profileService.updateProfile(profileId, updatedProfile); // Cập nhật profile
+            Profile profile = profileService.updateProfile(user.getProfileId(), updatedProfile); // Cập nhật profile
 
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Cập nhật profile thành công", profile));
         } catch (RuntimeException e) {

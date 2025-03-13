@@ -2,6 +2,7 @@ package com.example.mobile.model;
 
 import com.example.mobile.model.enums.Type;
 import lombok.Data;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Document(collection = "notifications")
 public class Notification {
     @Id
-    private String id;
+    private ObjectId id;
 
     private String userId;
 
