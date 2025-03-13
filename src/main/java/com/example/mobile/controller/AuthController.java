@@ -5,7 +5,6 @@ import com.example.mobile.dto.response.ApiResponse;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.model.User;
 import com.example.mobile.service.IAuthenticateService;
-import com.example.mobile.service.IUserService;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,20 +26,11 @@ public class AuthController {
     @Autowired
     IAuthenticateService authenticateService;
 
-    @Autowired
-    IUserService userService;
-
     @Operation(summary = "Đăng ký tài khoản", description = "Tạo tài khoản mới với thông tin username, password, email")
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<User>> signup(@RequestBody SignUpDto signUpDto) {
-        User user = new User();
-        user.setUsername(signUpDto.getUsername());
-        user.setPassword(signUpDto.getPassword());
-        user.setEmail(signUpDto.getEmail());
-
-        User savedUser = authenticateService.signup(user);
-        ApiResponse<User> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng ký thành công", savedUser);
-        return ResponseEntity.ok(response);
+        User savedUser = authenticateService.signup(signUpDto);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng ký thành công", savedUser));
     }
 
     @Operation(summary = "Đăng nhập", description = "Người dùng đăng nhập với username và password")
@@ -48,11 +38,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponse>> login(@RequestBody LoginDto loginDto) throws JOSEException {
         UserResponse userResponse = authenticateService.login(loginDto);
         if (userResponse == null) {
-            ApiResponse<UserResponse> response = new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Tên đăng nhập hoặc mật khẩu không đúng", null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Tên đăng nhập hoặc mật khẩu không đúng", null));
         }
-        ApiResponse<UserResponse> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập thành công", userResponse);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập thành công", userResponse));
     }
 
     @Operation(summary = "Đăng nhập Google hoặc Facebook", description = "Người dùng đăng nhập bằng Google hoặc Facebook OAuth2")
@@ -76,24 +64,20 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout() {
         authenticateService.revokeRefreshToken();
-        ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Đăng xuất thành công", null);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng xuất thành công", null));
     }
 
     @Operation(summary = "Làm mới token", description = "Nhận access token mới bằng refresh token")
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<String>> refreshToken(@RequestBody RefreshTokenDto refreshToken) throws JOSEException, ParseException {
         if (refreshToken == null) {
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Refresh token không được cung cấp", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Refresh token không được cung cấp", null));
         }
         String newAccessToken = authenticateService.refreshAccessToken(refreshToken);
         if (newAccessToken != null) {
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Access token mới đã được tạo", newAccessToken);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Access token mới đã được tạo", newAccessToken));
         }
-        ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Refresh token không hợp lệ hoặc đã hết hạn", null);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Refresh token không hợp lệ hoặc đã hết hạn", null));
     }
 
     @Operation(summary = "Quên mật khẩu", description = "Gửi OTP đến email của người dùng")
@@ -101,12 +85,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody ForgotPassWordDto forgotPasswordDto) {
         String email = forgotPasswordDto.getEmail();
         if (email == null || email.isEmpty()) {
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Email không hợp lệ.", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Email không hợp lệ.", null));
         }
         authenticateService.sendOtp(email);
-        ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "OTP đã được gửi đến email của bạn.", null);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "OTP đã được gửi đến email của bạn.", null));
     }
 
     @Operation(summary = "Đặt lại mật khẩu", description = "Người dùng đặt lại mật khẩu bằng OTP đã nhận")
@@ -117,17 +99,14 @@ public class AuthController {
         String newPassword = resetPasswordDto.getNewPassword();
 
         if (email == null || otp == null || newPassword == null) {
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Dữ liệu không hợp lệ.", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Dữ liệu không hợp lệ.", null));
         }
 
         boolean success = authenticateService.resetPassword(email, otp, newPassword);
         if (success) {
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Mật khẩu đã được đặt lại thành công.", null);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Mật khẩu đã được đặt lại thành công.", null));
         }
-        ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "OTP không hợp lệ hoặc email không tồn tại.", null);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "OTP không hợp lệ hoặc email không tồn tại.", null));
     }
 
     @Operation(summary = "Kiểm tra token", description = "Xác thực token có hợp lệ hay không")
@@ -135,12 +114,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> introspect(@RequestBody AccessTokenDto token) throws JOSEException, ParseException {
         String email = authenticateService.introspectToken(token);
         if (email != null) {
-            ApiResponse<String> response = new ApiResponse<>(HttpStatus.OK.value(), "Token hợp lệ", email);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Token hợp lệ", email));
         }
-        ApiResponse<String> response = new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Token không hợp lệ", null);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Token không hợp lệ", null));
     }
-
-
 }

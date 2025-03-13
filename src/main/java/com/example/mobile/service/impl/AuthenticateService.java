@@ -3,6 +3,7 @@ package com.example.mobile.service.impl;
 import com.example.mobile.dto.request.AccessTokenDto;
 import com.example.mobile.dto.request.LoginDto;
 import com.example.mobile.dto.request.RefreshTokenDto;
+import com.example.mobile.dto.request.SignUpDto;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
@@ -192,7 +193,11 @@ public class AuthenticateService implements IAuthenticateService {
     }
 
     @Override
-    public User signup(User user) {
+    public User signup(SignUpDto signUpDto) {
+        User user = new User();
+        user.setUsername(signUpDto.getUsername());
+        user.setPassword(signUpDto.getPassword());
+        user.setEmail(signUpDto.getEmail());
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new AppException(ErrorCode.USERNAME_EXIST_REGISTER);
         }

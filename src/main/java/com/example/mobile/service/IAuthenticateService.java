@@ -3,6 +3,7 @@ package com.example.mobile.service;
 import com.example.mobile.dto.request.AccessTokenDto;
 import com.example.mobile.dto.request.LoginDto;
 import com.example.mobile.dto.request.RefreshTokenDto;
+import com.example.mobile.dto.request.SignUpDto;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.model.User;
 import com.nimbusds.jose.JOSEException;
@@ -23,7 +24,7 @@ public interface IAuthenticateService {
 
     UserResponse login(LoginDto loginRequestDto) throws JOSEException;
 
-    User signup(User user);
+    User signup(SignUpDto signUpDto);
 
     void sendOtp(String email);
 
