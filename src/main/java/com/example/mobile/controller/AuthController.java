@@ -83,26 +83,14 @@ public class AuthController {
     @Operation(summary = "Quên mật khẩu", description = "Gửi OTP đến email của người dùng")
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody ForgotPassWordDto forgotPasswordDto) {
-        String email = forgotPasswordDto.getEmail();
-        if (email == null || email.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Email không hợp lệ.", null));
-        }
-        authenticateService.sendOtp(email);
+        authenticateService.sendOtp(forgotPasswordDto);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "OTP đã được gửi đến email của bạn.", null));
     }
 
     @Operation(summary = "Đặt lại mật khẩu", description = "Người dùng đặt lại mật khẩu bằng OTP đã nhận")
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody ResetPassWordDto resetPasswordDto) {
-        String email = resetPasswordDto.getEmail();
-        String otp = resetPasswordDto.getOtp();
-        String newPassword = resetPasswordDto.getNewPassword();
-
-        if (email == null || otp == null || newPassword == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Dữ liệu không hợp lệ.", null));
-        }
-
-        boolean success = authenticateService.resetPassword(email, otp, newPassword);
+        boolean success = authenticateService.resetPassword(resetPasswordDto);
         if (success) {
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Mật khẩu đã được đặt lại thành công.", null));
         }

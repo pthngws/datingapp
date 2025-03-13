@@ -1,9 +1,6 @@
 package com.example.mobile.service;
 
-import com.example.mobile.dto.request.AccessTokenDto;
-import com.example.mobile.dto.request.LoginDto;
-import com.example.mobile.dto.request.RefreshTokenDto;
-import com.example.mobile.dto.request.SignUpDto;
+import com.example.mobile.dto.request.*;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.model.User;
 import com.nimbusds.jose.JOSEException;
@@ -26,9 +23,9 @@ public interface IAuthenticateService {
 
     User signup(SignUpDto signUpDto);
 
-    void sendOtp(String email);
+    void sendOtp(ForgotPassWordDto forgotPassWordDto);
 
-    boolean resetPassword(String email, String otp, String newPassword);
+    boolean resetPassword(ResetPassWordDto resetPassWordDto);
 
     String refreshAccessToken(RefreshTokenDto refreshToken) throws JOSEException, ParseException;
 

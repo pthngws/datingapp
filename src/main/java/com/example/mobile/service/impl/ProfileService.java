@@ -2,11 +2,14 @@ package com.example.mobile.service.impl;
 
 import com.example.mobile.dto.request.ProfileUpdateDTO;
 import com.example.mobile.model.Profile;
+import com.example.mobile.model.User;
 import com.example.mobile.model.enums.Gender;
 import com.example.mobile.repository.ProfileRepository;
+import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IProfileService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,62 +19,70 @@ import java.util.Optional;
 public class ProfileService implements IProfileService {
     @Autowired
     private ProfileRepository profileRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
 
 
     @Override
-    public Profile updateProfile(ObjectId id, ProfileUpdateDTO dto) {
-        Optional<Profile> optionalProfile = profileRepository.findById(id);
+    public Profile updateProfile(ProfileUpdateDTO updateDTO) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        ObjectId userId = new ObjectId(authentication.getName());  // userId lưu trong "sub" của token
+
+        // Lấy profile từ user
+        User user = userRepository.findById(userId).get();
+        Optional<Profile> optionalProfile = profileRepository.findById(user.getProfileId());
 
         if (optionalProfile.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy Profile với ID: " + id);
+            throw new RuntimeException("Không tìm thấy Profile với ID: " + user.getProfileId());
         }
 
         Profile existingProfile = optionalProfile.get();
 
-        if (dto.getFirstName() != null) {
-            existingProfile.setFirstName(dto.getFirstName());
+        if (updateDTO.getFirstName() != null) {
+            existingProfile.setFirstName(updateDTO.getFirstName());
         }
-        if (dto.getLastName() != null) {
-            existingProfile.setLastName(dto.getLastName());
+        if (updateDTO.getLastName() != null) {
+            existingProfile.setLastName(updateDTO.getLastName());
         }
-        if (dto.getHobbies() != null) {
-            existingProfile.setHobbies(dto.getHobbies());
+        if (updateDTO.getHobbies() != null) {
+            existingProfile.setHobbies(updateDTO.getHobbies());
         }
-        if (dto.getGender() != null) {
-            existingProfile.setGender(dto.getGender());
+        if (updateDTO.getGender() != null) {
+            existingProfile.setGender(updateDTO.getGender());
         }
-        if (dto.getAge() != null && dto.getAge() > 0) {
-            existingProfile.setAge(dto.getAge());
+        if (updateDTO.getAge() != null && updateDTO.getAge() > 0) {
+            existingProfile.setAge(updateDTO.getAge());
         }
-        if (dto.getHeight() != null && dto.getHeight() > 0) {
-            existingProfile.setHeight(dto.getHeight());
+        if (updateDTO.getHeight() != null && updateDTO.getHeight() > 0) {
+            existingProfile.setHeight(updateDTO.getHeight());
         }
-        if (dto.getBio() != null) {
-            existingProfile.setBio(dto.getBio());
+        if (updateDTO.getBio() != null) {
+            existingProfile.setBio(updateDTO.getBio());
         }
-        if (dto.getZodiacSign() != null) {
-            existingProfile.setZodiacSign(dto.getZodiacSign());
+        if (updateDTO.getZodiacSign() != null) {
+            existingProfile.setZodiacSign(updateDTO.getZodiacSign());
         }
-        if (dto.getPersonalityType() != null) {
-            existingProfile.setPersonalityType(dto.getPersonalityType());
+        if (updateDTO.getPersonalityType() != null) {
+            existingProfile.setPersonalityType(updateDTO.getPersonalityType());
         }
-        if (dto.getCommunicationStyle() != null) {
-            existingProfile.setCommunicationStyle(dto.getCommunicationStyle());
+        if (updateDTO.getCommunicationStyle() != null) {
+            existingProfile.setCommunicationStyle(updateDTO.getCommunicationStyle());
         }
-        if (dto.getLoveLanguage() != null) {
-            existingProfile.setLoveLanguage(dto.getLoveLanguage());
+        if (updateDTO.getLoveLanguage() != null) {
+            existingProfile.setLoveLanguage(updateDTO.getLoveLanguage());
         }
-        if (dto.getPetPreference() != null) {
-            existingProfile.setPetPreference(dto.getPetPreference());
+        if (updateDTO.getPetPreference() != null) {
+            existingProfile.setPetPreference(updateDTO.getPetPreference());
         }
-        if (dto.getDrinkingHabit() != null) {
-            existingProfile.setDrinkingHabit(dto.getDrinkingHabit());
+        if (updateDTO.getDrinkingHabit() != null) {
+            existingProfile.setDrinkingHabit(updateDTO.getDrinkingHabit());
         }
-        if (dto.getSmokingHabit() != null) {
-            existingProfile.setSmokingHabit(dto.getSmokingHabit());
+        if (updateDTO.getSmokingHabit() != null) {
+            existingProfile.setSmokingHabit(updateDTO.getSmokingHabit());
         }
-        if (dto.getSleepingHabit() != null) {
-            existingProfile.setSleepingHabit(dto.getSleepingHabit());
+        if (updateDTO.getSleepingHabit() != null) {
+            existingProfile.setSleepingHabit(updateDTO.getSleepingHabit());
         }
 
         return profileRepository.save(existingProfile);

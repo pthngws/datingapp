@@ -1,9 +1,6 @@
 package com.example.mobile.service.impl;
 
-import com.example.mobile.dto.request.AccessTokenDto;
-import com.example.mobile.dto.request.LoginDto;
-import com.example.mobile.dto.request.RefreshTokenDto;
-import com.example.mobile.dto.request.SignUpDto;
+import com.example.mobile.dto.request.*;
 import com.example.mobile.dto.response.UserResponse;
 import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
@@ -223,14 +220,18 @@ public class AuthenticateService implements IAuthenticateService {
     }
 
     @Override
-    public void sendOtp(String email) {
+    public void sendOtp(ForgotPassWordDto forgotPassWordDto) {
+        String email = forgotPassWordDto.getEmail();
         String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         otpStorage.put(email, otp);
         emailService.sendOtpEmail(email, otp);
     }
 
     @Override
-    public boolean resetPassword(String email, String otp, String newPassword) {
+    public boolean resetPassword(ResetPassWordDto resetPassWordDto) {
+        String email = resetPassWordDto.getEmail();
+        String otp = resetPassWordDto.getOtp();
+        String newPassword = resetPassWordDto.getNewPassword();
         if (!otpStorage.containsKey(email)) {
             throw new AppException(ErrorCode.OTP_NOT_FOUND);
         }

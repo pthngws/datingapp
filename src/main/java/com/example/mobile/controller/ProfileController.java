@@ -10,12 +10,10 @@ import com.example.mobile.service.IImageUploadService;
 import com.example.mobile.service.IProfileService;
 import com.example.mobile.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,10 +42,6 @@ public class ProfileController {
             return ResponseEntity.badRequest().body("Upload failed: " + e.getMessage());
         }
     }
-
-
-
-
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<Profile>>> searchProfiles(
@@ -86,25 +80,7 @@ public class ProfileController {
     @PutMapping("/update")
     public ResponseEntity<ApiResponse<Profile>> updateProfile(@RequestBody ProfileUpdateDTO updatedProfile) {
         try {
-            // Lấy ID từ token
-            var authentication = SecurityContextHolder.getContext().getAuthentication();
-            ObjectId userId = new ObjectId(authentication.getName());  // userId lưu trong "sub" của token
-
-            // Lấy profile từ user
-            User user = userService.findUserById(userId);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Không tìm thấy User với ID: " + userId, null));
-            }
-
-            // Lấy profile từ user
-            if (user.getProfileId() == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Không tìm thấy Profile của user", null));
-            }
-
-            Profile profile = profileService.updateProfile(user.getProfileId(), updatedProfile); // Cập nhật profile
-
+            Profile profile = profileService.updateProfile(updatedProfile); // Cập nhật profile
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Cập nhật profile thành công", profile));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
