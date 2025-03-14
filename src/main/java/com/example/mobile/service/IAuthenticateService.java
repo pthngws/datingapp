@@ -10,24 +10,18 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import java.text.ParseException;
 
 public interface IAuthenticateService {
-    String introspectToken(AccessTokenDto token) throws JOSEException, ParseException;
 
-    String generateToken(User userEntity) throws JOSEException;
-
-    String generateRefreshToken(User userEntity);
-
+    User signup(SignUpDto signUpDto);
+    UserResponse login(LoginDto loginRequestDto) throws JOSEException;
 
     UserResponse oauth2Login(OidcUser oidcUser, OAuth2User oAuth2User) throws JOSEException;
 
-    UserResponse login(LoginDto loginRequestDto) throws JOSEException;
-
-    User signup(SignUpDto signUpDto);
+    String generateToken(User userEntity) throws JOSEException;
+    String generateRefreshToken(User userEntity);
+    String introspectToken(AccessTokenDto token) throws JOSEException, ParseException;
+    String refreshAccessToken(RefreshTokenDto refreshToken) throws JOSEException, ParseException;
+    void revokeRefreshToken();
 
     void sendOtp(ForgotPassWordDto forgotPassWordDto);
-
     boolean resetPassword(ResetPassWordDto resetPassWordDto);
-
-    String refreshAccessToken(RefreshTokenDto refreshToken) throws JOSEException, ParseException;
-
-    void revokeRefreshToken();
 }

@@ -30,7 +30,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User findUserById(ObjectId id) {
+    public User findById(ObjectId id) {
         Optional<User> optionalUser = userRepository.findById(id);
         return optionalUser.orElse(null);
     }

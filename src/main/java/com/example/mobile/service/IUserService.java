@@ -10,5 +10,5 @@ public interface IUserService {
 
     User findByUsername(String username);
 
-    User findUserById(ObjectId id);
+    User findById(ObjectId id);
 }

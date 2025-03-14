@@ -2,6 +2,7 @@ package com.example.mobile.controller;
 
 import com.example.mobile.dto.request.ProfileUpdateDTO;
 import com.example.mobile.dto.response.ApiResponse;
+import com.example.mobile.dto.response.ProfileResponse;
 import com.example.mobile.model.Album;
 import com.example.mobile.model.Profile;
 import com.example.mobile.model.User;
@@ -10,6 +11,7 @@ import com.example.mobile.service.IImageUploadService;
 import com.example.mobile.service.IProfileService;
 import com.example.mobile.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,7 +33,7 @@ public class ProfileController {
     @Autowired
     private IImageUploadService imageUploadService;
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload multiple images")
     public ResponseEntity<?> uploadImages(
             @RequestPart("files") MultipartFile[] files) {
@@ -89,6 +91,13 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống", null));
         }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfileByUserId(@PathVariable String id) {
+        ObjectId objectId = new ObjectId(id);
+        ProfileResponse profile = profileService.findByUserId(objectId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "", profile));
     }
 
 }

@@ -13,7 +13,7 @@ public enum CommunicationStyle {
         this.tenTiengViet = tenTiengViet;
     }
 
-    public String getTenTiengViet() {
+    public String getDisplayName() {
         return tenTiengViet;
     }
 }

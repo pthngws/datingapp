@@ -80,44 +80,50 @@ public class AuthenticateService implements IAuthenticateService {
     PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
-    public String introspectToken(AccessTokenDto token) throws JOSEException, ParseException {
-        JWSVerifier verifier = new MACVerifier(SECRET.getBytes());
-        SignedJWT signedJWT = SignedJWT.parse(token.getAccessToken());
-        Date expirationDate = signedJWT.getJWTClaimsSet().getExpirationTime();
-        if (signedJWT.verify(verifier) && expirationDate.after(new Date())) {
-            return signedJWT.getJWTClaimsSet().getSubject();
-        } else {
-            throw new AppException(ErrorCode.INVALID_TOKEN);
+    public User signup(SignUpDto signUpDto) {
+        User user = new User();
+        user.setUsername(signUpDto.getUsername());
+        user.setPassword(signUpDto.getPassword());
+        user.setEmail(signUpDto.getEmail());
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new AppException(ErrorCode.USERNAME_EXIST_REGISTER);
         }
+        if (userRepository.existsByEmail(user.getEmail())) { // Giả định có phương thức này
+            throw new AppException(ErrorCode.EMAIL_EXIST_REGISTER);
+        }
+        user.setCreateAt(LocalDate.now());
+        user.setRole(Role.USER);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setProvider(Provider.LOCAL);
+        user.setAccountStatus(AccoutStatus.ACTIVE);
+        user.setSubscriptionStatus(SubscriptionStatus.FREE);
+        Profile profile = new Profile();
+        Address address = new Address();
+        addressRepository.save(address);
+        Album album = new Album();
+        albumRepository.save(album);
+        profile.setAddressId(address.getId());
+        profile.setAlbumId(album.getId());
+        profileRepository.save(profile);
+        user.setProfileId(profile.getId());
+        return userRepository.save(user);
     }
 
     @Override
-    public String generateToken(User userEntity) throws JOSEException {
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(String.valueOf(userEntity.getId()))
-                .claim("role", "ROLE_" + userEntity.getRole())
-                .issuer(ISSUER)
-                .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                .build();
-
-        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
-        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
-        jwsObject.sign(new MACSigner(SECRET.getBytes()));
-        return jwsObject.serialize();
-    }
-
-    @Override
-    public String generateRefreshToken(User userEntity) {
-        byte[] randomBytes = new byte[32];
-        secureRandom.nextBytes(randomBytes);
-        String refreshToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-
-        long refreshTokenTTL = 7 * 24 * 60 * 60; // 7 ngày
-        refreshTokenService.saveRefreshToken(userEntity.getId(), refreshToken, refreshTokenTTL);
-
-        return refreshToken;
+    public UserResponse login(LoginDto loginRequestDto) throws JOSEException {
+        User user = userService.findByUsername(loginRequestDto.getUsername());
+        if (user == null || !passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
+            throw new AppException(ErrorCode.USER_NOT_EXIST);
+        }
+        if (user.getAccountStatus() != AccoutStatus.ACTIVE) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        String accessToken = this.generateToken(user);
+        String refreshToken = this.generateRefreshToken(user);
+        UserResponse userResponse = new UserResponse(user);
+        userResponse.setToken(accessToken);
+        userResponse.setRefreshToken(refreshToken);
+        return userResponse;
     }
 
     @Override
@@ -170,53 +176,68 @@ public class AuthenticateService implements IAuthenticateService {
         return new UserResponse(user, accessToken, refreshToken);
     }
 
-
-
     @Override
-    public UserResponse login(LoginDto loginRequestDto) throws JOSEException {
-        User user = userService.findByUsername(loginRequestDto.getUsername());
-        if (user == null || !passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
-            throw new AppException(ErrorCode.USER_NOT_EXIST);
+    public String introspectToken(AccessTokenDto token) throws JOSEException, ParseException {
+        JWSVerifier verifier = new MACVerifier(SECRET.getBytes());
+        SignedJWT signedJWT = SignedJWT.parse(token.getAccessToken());
+        Date expirationDate = signedJWT.getJWTClaimsSet().getExpirationTime();
+        if (signedJWT.verify(verifier) && expirationDate.after(new Date())) {
+            return signedJWT.getJWTClaimsSet().getSubject();
+        } else {
+            throw new AppException(ErrorCode.INVALID_TOKEN);
         }
-        if (user.getAccountStatus() != AccoutStatus.ACTIVE) {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-        String accessToken = this.generateToken(user);
-        String refreshToken = this.generateRefreshToken(user);
-        UserResponse userResponse = new UserResponse(user);
-        userResponse.setToken(accessToken);
-        userResponse.setRefreshToken(refreshToken);
-        return userResponse;
     }
 
     @Override
-    public User signup(SignUpDto signUpDto) {
-        User user = new User();
-        user.setUsername(signUpDto.getUsername());
-        user.setPassword(signUpDto.getPassword());
-        user.setEmail(signUpDto.getEmail());
-        if (userRepository.existsByUsername(user.getUsername())) {
-            throw new AppException(ErrorCode.USERNAME_EXIST_REGISTER);
+    public String generateToken(User userEntity) throws JOSEException {
+        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+                .subject(String.valueOf(userEntity.getId()))
+                .claim("role", "ROLE_" + userEntity.getRole())
+                .issuer(ISSUER)
+                .issueTime(new Date())
+                .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
+                .build();
+
+        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
+        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
+        jwsObject.sign(new MACSigner(SECRET.getBytes()));
+        return jwsObject.serialize();
+    }
+
+    @Override
+    public String generateRefreshToken(User userEntity) {
+        byte[] randomBytes = new byte[32];
+        secureRandom.nextBytes(randomBytes);
+        String refreshToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+
+        long refreshTokenTTL = 7 * 24 * 60 * 60; // 7 ngày
+        refreshTokenService.saveRefreshToken(userEntity.getId(), refreshToken, refreshTokenTTL);
+
+        return refreshToken;
+    }
+
+    @Override
+    public String refreshAccessToken(RefreshTokenDto refreshToken) throws JOSEException {
+        ObjectId userId = getUserIdFromRefreshToken(refreshToken);
+        if (userId == null) {
+            throw new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
-        if (userRepository.existsByEmail(user.getEmail())) { // Giả định có phương thức này
-            throw new AppException(ErrorCode.EMAIL_EXIST_REGISTER);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+
+        return generateToken(user);
+    }
+
+    @Override
+    public void revokeRefreshToken() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        user.setCreateAt(LocalDate.now());
-        user.setRole(Role.USER);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setProvider(Provider.LOCAL);
-        user.setAccountStatus(AccoutStatus.ACTIVE);
-        user.setSubscriptionStatus(SubscriptionStatus.FREE);
-        Profile profile = new Profile();
-        Address address = new Address();
-        addressRepository.save(address);
-        Album album = new Album();
-        albumRepository.save(album);
-        profile.setAddressId(address.getId());
-        profile.setAlbumId(album.getId());
-        profileRepository.save(profile);
-        user.setProfileId(profile.getId());
-        return userRepository.save(user);
+        ObjectId userId = new ObjectId(authentication.getName());
+        refreshTokenService.deleteRefreshToken(userId);
     }
 
     @Override
@@ -246,19 +267,6 @@ public class AuthenticateService implements IAuthenticateService {
         return true;
     }
 
-    @Override
-    public String refreshAccessToken(RefreshTokenDto refreshToken) throws JOSEException {
-        ObjectId userId = getUserIdFromRefreshToken(refreshToken);
-        if (userId == null) {
-            throw new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
-        }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
-
-        return generateToken(user);
-    }
-
     private ObjectId getUserIdFromRefreshToken(RefreshTokenDto refreshToken) {
         // Duyệt qua tất cả user để tìm refresh token (Không tối ưu)
         for (User user : userRepository.findAll()) {
@@ -268,15 +276,5 @@ public class AuthenticateService implements IAuthenticateService {
             }
         }
         return null;
-    }
-
-    @Override
-    public void revokeRefreshToken() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-        ObjectId userId = new ObjectId(authentication.getName());
-        refreshTokenService.deleteRefreshToken(userId);
     }
 }

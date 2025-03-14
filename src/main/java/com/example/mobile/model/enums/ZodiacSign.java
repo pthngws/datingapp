@@ -20,7 +20,7 @@ public enum ZodiacSign {
         this.tenTiengViet = tenTiengViet;
     }
 
-    public String getTenTiengViet() {
+    public String getDisplayName() {
         return tenTiengViet;
     }
 
