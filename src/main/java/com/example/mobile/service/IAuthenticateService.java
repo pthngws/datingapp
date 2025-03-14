@@ -23,5 +23,5 @@ public interface IAuthenticateService {
     void revokeRefreshToken();
 
     void sendOtp(ForgotPassWordDto forgotPassWordDto);
-    boolean resetPassword(ResetPassWordDto resetPassWordDto);
+    boolean resetPassword(ResetPasswordDto resetPassWordDto);
 }

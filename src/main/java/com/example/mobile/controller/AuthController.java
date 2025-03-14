@@ -8,6 +8,7 @@ import com.example.mobile.service.IAuthenticateService;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +29,14 @@ public class AuthController {
 
     @Operation(summary = "Đăng ký tài khoản", description = "Tạo tài khoản mới với thông tin username, password, email")
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<User>> signup(@RequestBody SignUpDto signUpDto) {
+    public ResponseEntity<ApiResponse<User>> signup(@Valid @RequestBody SignUpDto signUpDto) {
         User savedUser = authenticateService.signup(signUpDto);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng ký thành công", savedUser));
     }
 
     @Operation(summary = "Đăng nhập", description = "Người dùng đăng nhập với username và password")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserResponse>> login(@RequestBody LoginDto loginDto) throws JOSEException {
+    public ResponseEntity<ApiResponse<UserResponse>> login(@Valid @RequestBody LoginDto loginDto) throws JOSEException {
         UserResponse userResponse = authenticateService.login(loginDto);
         if (userResponse == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Tên đăng nhập hoặc mật khẩu không đúng", null));
@@ -82,14 +83,14 @@ public class AuthController {
 
     @Operation(summary = "Quên mật khẩu", description = "Gửi OTP đến email của người dùng")
     @PostMapping("/forgot-password")
-    public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody ForgotPassWordDto forgotPasswordDto) {
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@Valid @RequestBody ForgotPassWordDto forgotPasswordDto) {
         authenticateService.sendOtp(forgotPasswordDto);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "OTP đã được gửi đến email của bạn.", null));
     }
 
     @Operation(summary = "Đặt lại mật khẩu", description = "Người dùng đặt lại mật khẩu bằng OTP đã nhận")
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody ResetPassWordDto resetPasswordDto) {
+    public ResponseEntity<ApiResponse<String>> resetPassword(@Valid @RequestBody ResetPasswordDto resetPasswordDto) {
         boolean success = authenticateService.resetPassword(resetPasswordDto);
         if (success) {
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Mật khẩu đã được đặt lại thành công.", null));

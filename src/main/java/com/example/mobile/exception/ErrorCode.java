@@ -34,7 +34,12 @@ public enum ErrorCode {
 
     // Email Related Errors (1600 series)
     EMAIL_INVALID(1600, "Địa chỉ email không hợp lệ", HttpStatus.BAD_REQUEST),
-    EMAIL_SEND_FAILED(1601, "Gửi email thất bại", HttpStatus.INTERNAL_SERVER_ERROR);
+    EMAIL_SEND_FAILED(1601, "Gửi email thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // Profile, Address, and Album Errors (1700 series)
+    PROFILE_NOT_FOUND(1700, "Không tìm thấy profile", HttpStatus.NOT_FOUND),
+    ADDRESS_NOT_FOUND(1701, "Không tìm thấy địa chỉ", HttpStatus.NOT_FOUND),
+    ALBUM_NOT_FOUND(1702, "Không tìm thấy bộ sưu tập", HttpStatus.NOT_FOUND);
 
     private final int responseCode;
     private final String message;

@@ -249,7 +249,7 @@ public class AuthenticateService implements IAuthenticateService {
     }
 
     @Override
-    public boolean resetPassword(ResetPassWordDto resetPassWordDto) {
+    public boolean resetPassword(ResetPasswordDto resetPassWordDto) {
         String email = resetPassWordDto.getEmail();
         String otp = resetPassWordDto.getOtp();
         String newPassword = resetPassWordDto.getNewPassword();

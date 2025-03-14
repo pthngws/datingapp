@@ -11,6 +11,7 @@ import com.example.mobile.service.IImageUploadService;
 import com.example.mobile.service.IProfileService;
 import com.example.mobile.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -80,7 +81,7 @@ public class ProfileController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<ApiResponse<Profile>> updateProfile(@RequestBody ProfileUpdateDTO updatedProfile) {
+    public ResponseEntity<ApiResponse<Profile>> updateProfile(@Valid @RequestBody ProfileUpdateDTO updatedProfile) {
         try {
             Profile profile = profileService.updateProfile(updatedProfile); // Cập nhật profile
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Cập nhật profile thành công", profile));

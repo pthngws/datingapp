@@ -2,6 +2,8 @@ package com.example.mobile.service.impl;
 
 import com.example.mobile.dto.request.ProfileUpdateDTO;
 import com.example.mobile.dto.response.ProfileResponse;
+import com.example.mobile.exception.AppException;
+import com.example.mobile.exception.ErrorCode;
 import com.example.mobile.model.Address;
 import com.example.mobile.model.Album;
 import com.example.mobile.model.Profile;
@@ -26,7 +28,7 @@ import java.util.stream.Collectors;
 public class ProfileService implements IProfileService {
     @Autowired
     private ProfileRepository profileRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
 
@@ -47,7 +49,7 @@ public class ProfileService implements IProfileService {
         Optional<Profile> optionalProfile = profileRepository.findById(user.getProfileId());
 
         if (optionalProfile.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy Profile với ID: " + user.getProfileId());
+            throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
         }
 
         Profile existingProfile = optionalProfile.get();
@@ -109,55 +111,49 @@ public class ProfileService implements IProfileService {
 
     @Override
     public ProfileResponse findByUserId(ObjectId userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
         Optional<Profile> optionalProfile = profileRepository.findById(user.getProfileId());
 
-        if (optionalProfile.isEmpty()) {
-            throw new RuntimeException("Profile not found");
-        }
+        if (optionalProfile.isEmpty()) throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
 
         Profile profile = optionalProfile.get();
-        ProfileResponse profileResponse = new ProfileResponse();
-        Address address = addressRepository.findById(profile.getAddressId()).orElseThrow(() -> new RuntimeException("Address not found"));
-        // Set dữ liệu từ Profile vào ProfileResponse
-        profileResponse.setStreet(address.getStreet());
-        profileResponse.setDistrict(address.getDistrict());
-        profileResponse.setProvince(address.getProvince());
+        Address address = addressRepository.findById(profile.getAddressId())
+                .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND));
+        Album album = albumRepository.findById(profile.getAlbumId())
+                .orElseThrow(() -> new AppException(ErrorCode.ALBUM_NOT_FOUND));
 
-        Album album = albumRepository.findById(profile.getAlbumId()).orElseThrow(() -> new RuntimeException("Album not found"));
-        profileResponse.setPic1(album.getPic1());
-        profileResponse.setPic2(album.getPic2());
-        profileResponse.setPic3(album.getPic3());
-        profileResponse.setPic4(album.getPic4());
-        profileResponse.setPic5(album.getPic5());
-        profileResponse.setPic6(album.getPic6());
-        profileResponse.setPic7(album.getPic7());
-        profileResponse.setPic8(album.getPic8());
-        profileResponse.setPic9(album.getPic9());
-
-        profileResponse.setFirstName(profile.getFirstName());
-        profileResponse.setLastName(profile.getLastName());
-
-        List<String> hobbiesVietnamese = profile.getHobbies()
-                .stream()
-                .map(Hobbies::getDisplayName) // Gọi phương thức getDisplayName() để lấy tiếng Việt
-                .collect(Collectors.toList());
-        profileResponse.setHobbies(hobbiesVietnamese);
-
-        profileResponse.setGender(profile.getGender().getDisplayName());
-        profileResponse.setAge(profile.getAge());
-        profileResponse.setHeight(profile.getHeight());
-        profileResponse.setBio(profile.getBio());
-        profileResponse.setZodiacSign(profile.getZodiacSign().getDisplayName());
-        profileResponse.setPersonalityType(profile.getPersonalityType());
-        profileResponse.setCommunicationStyle(profile.getCommunicationStyle().getDisplayName());
-        profileResponse.setLoveLanguage(profile.getLoveLanguage().getDisplayName());
-        profileResponse.setPetPreference(profile.getPetPreference().getDisplayName());
-        profileResponse.setDrinkingHabit(profile.getDrinkingHabit().getDisplayName());
-        profileResponse.setSmokingHabit(profile.getSmokingHabit().getDisplayName());
-        profileResponse.setSleepingHabit(profile.getSleepingHabit().getDisplayName());
-
-        return profileResponse;
+        return ProfileResponse.builder()
+                .firstName(profile.getFirstName())
+                .lastName(profile.getLastName())
+                .hobbies(profile.getHobbies()
+                        .stream()
+                        .map(Hobbies::getDisplayName)
+                        .collect(Collectors.toList()))
+                .gender(profile.getGender().getDisplayName())
+                .age(profile.getAge())
+                .height(profile.getHeight())
+                .bio(profile.getBio())
+                .zodiacSign(profile.getZodiacSign().getDisplayName())
+                .personalityType(profile.getPersonalityType())
+                .communicationStyle(profile.getCommunicationStyle().getDisplayName())
+                .loveLanguage(profile.getLoveLanguage().getDisplayName())
+                .petPreference(profile.getPetPreference().getDisplayName())
+                .drinkingHabit(profile.getDrinkingHabit().getDisplayName())
+                .smokingHabit(profile.getSmokingHabit().getDisplayName())
+                .sleepingHabit(profile.getSleepingHabit().getDisplayName())
+                .street(address.getStreet())
+                .district(address.getDistrict())
+                .province(address.getProvince())
+                .pic1(album.getPic1())
+                .pic2(album.getPic2())
+                .pic3(album.getPic3())
+                .pic4(album.getPic4())
+                .pic5(album.getPic5())
+                .pic6(album.getPic6())
+                .pic7(album.getPic7())
+                .pic8(album.getPic8())
+                .pic9(album.getPic9())
+                .build();
     }
 
 }

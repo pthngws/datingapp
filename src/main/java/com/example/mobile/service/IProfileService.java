@@ -11,9 +11,6 @@ import java.util.List;
 public interface IProfileService {
 
     List<Profile> searchProfiles(String firstName, String lastName, Gender gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight);
-
-
     Profile updateProfile(ProfileUpdateDTO profileUpdateDTO);
-
     ProfileResponse findByUserId(ObjectId userId);
 }
