@@ -21,7 +21,7 @@ import java.text.ParseException;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Các API liên quan đến xác thực người dùng")
+@Tag(name = "1. Authentication", description = "Các API liên quan đến xác thực người dùng")
 public class AuthController {
 
     @Autowired
