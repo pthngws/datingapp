@@ -13,9 +13,9 @@ public class Report {
     @Id
     private ObjectId id;
 
-    private String reporterId;
+    private ObjectId reporterId;
 
-    private String reportedUserId;
+    private ObjectId reportedUserId;
 
     private String reason;
 
