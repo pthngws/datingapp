@@ -12,9 +12,9 @@ public class Relationship {
     @Id
     private ObjectId id;
 
-    private String userId1;
+    private ObjectId userId1;
 
-    private String userId2;
+    private ObjectId userId2;
 
     private RelationshipStatus status;
 
