@@ -42,7 +42,7 @@ public class ProfileController {
             Album userImages = imageUploadService.uploadImages(files);
             return ResponseEntity.ok(userImages);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Upload failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Tải ảnh thất bại: " + e.getMessage());
         }
     }
 
@@ -60,7 +60,7 @@ public class ProfileController {
         try
         {
             List<Profile> profiles = profileService.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight);
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Search completed", profiles));
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Tìm kiếm thành công", profiles));
         }
         catch (Exception e){
             e.printStackTrace();
@@ -72,7 +72,7 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<List<User>>> getUsersCreatedWithinLast7Days() {
         try {
             List<User> users = userService.getUsersCreatedWithinLast7Days();
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Users created within the last 7 days", users));
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Danh sách user mới trong vòng 7 ngày", users));
         }
         catch (Exception e){
             e.printStackTrace();
