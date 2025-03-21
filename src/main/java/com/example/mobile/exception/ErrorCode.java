@@ -16,6 +16,7 @@ public enum ErrorCode {
     INVALID_REQUEST(1104, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST),
     EMAIL_EXIST_REGISTER(1105, "Email này đã được sử dụng", HttpStatus.CONFLICT),
     USERNAME_EXIST_REGISTER(1106, "Tên người dùng này đã được sử dụng", HttpStatus.CONFLICT),
+    INVALID_SIGNUP_DATA(1107, "Dữ liệu đăng ký không khớp", HttpStatus.BAD_REQUEST),
 
     // User Management Errors (1200 series)
     USER_NOT_EXIST(1200, "Người dùng không tồn tại", HttpStatus.NOT_FOUND),

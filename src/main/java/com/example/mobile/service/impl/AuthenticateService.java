@@ -56,6 +56,7 @@ public class AuthenticateService implements IAuthenticateService {
     private EmailService emailService;
 
     private HashMap<String, String> otpStorage = new HashMap<>();
+    private HashMap<String, SignUpDto> pendingSignups = new HashMap<>(); // Lưu tạm thông tin đăng ký
 
     @Autowired
     private ProfileRepository profileRepository;
@@ -80,23 +81,50 @@ public class AuthenticateService implements IAuthenticateService {
     PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
-    public User signup(SignUpDto signUpDto) {
-        User user = new User();
-        user.setUsername(signUpDto.getUsername());
-        user.setPassword(signUpDto.getPassword());
-        user.setEmail(signUpDto.getEmail());
-        if (userRepository.existsByUsername(user.getUsername())) {
+    public void requestSignup(SignUpDto signUpDto) {
+        // Kiểm tra username và email đã tồn tại chưa
+        if (userRepository.existsByUsername(signUpDto.getUsername())) {
             throw new AppException(ErrorCode.USERNAME_EXIST_REGISTER);
         }
-        if (userRepository.existsByEmail(user.getEmail())) { // Giả định có phương thức này
+        if (userRepository.existsByEmail(signUpDto.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_EXIST_REGISTER);
         }
+
+        // Tạo và gửi OTP
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+        otpStorage.put(signUpDto.getEmail(), otp);
+        pendingSignups.put(signUpDto.getEmail(), signUpDto); // Lưu thông tin đăng ký tạm thời
+        emailService.sendOtpEmail(signUpDto.getEmail(), otp);
+    }
+
+    @Override
+    public User verifySignup(VerifySignUpDto verifySignUpDto) {
+        String email = verifySignUpDto.getEmail();
+
+        // Kiểm tra OTP
+        if (!otpStorage.containsKey(email) || !otpStorage.get(email).equals(verifySignUpDto.getOtp())) {
+            throw new AppException(ErrorCode.INVALID_OTP);
+        }
+
+        // Kiểm tra thông tin đăng ký tạm thời
+        SignUpDto signUpDto = pendingSignups.get(email);
+        if (signUpDto == null || !signUpDto.getUsername().equals(verifySignUpDto.getUsername())
+                || !signUpDto.getPassword().equals(verifySignUpDto.getPassword())) {
+            throw new AppException(ErrorCode.INVALID_SIGNUP_DATA);
+        }
+
+        // Tạo user mới
+        User user = new User();
+        user.setUsername(signUpDto.getUsername());
+        user.setPassword(passwordEncoder.encode(signUpDto.getPassword()));
+        user.setEmail(signUpDto.getEmail());
         user.setCreateAt(LocalDate.now());
         user.setRole(Role.USER);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setProvider(Provider.LOCAL);
         user.setAccountStatus(AccoutStatus.ACTIVE);
         user.setSubscriptionStatus(SubscriptionStatus.FREE);
+
+        // Tạo profile, address, album
         Profile profile = new Profile();
         Address address = new Address();
         addressRepository.save(address);
@@ -106,7 +134,13 @@ public class AuthenticateService implements IAuthenticateService {
         profile.setAlbumId(album.getId());
         profileRepository.save(profile);
         user.setProfileId(profile.getId());
-        return userRepository.save(user);
+
+        // Lưu user và xóa dữ liệu tạm
+        User savedUser = userRepository.save(user);
+        otpStorage.remove(email);
+        pendingSignups.remove(email);
+
+        return savedUser;
     }
 
     @Override

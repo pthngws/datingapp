@@ -11,9 +11,9 @@ import java.text.ParseException;
 
 public interface IAuthenticateService {
 
-    User signup(SignUpDto signUpDto);
-    UserResponse login(LoginDto loginRequestDto) throws JOSEException;
+    void requestSignup(SignUpDto signUpDto);
 
+    User verifySignup(VerifySignUpDto verifySignUpDto);  UserResponse login(LoginDto loginRequestDto) throws JOSEException;
     UserResponse oauth2Login(OidcUser oidcUser, OAuth2User oAuth2User) throws JOSEException;
 
     String generateToken(User userEntity) throws JOSEException;

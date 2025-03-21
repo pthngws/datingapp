@@ -27,10 +27,17 @@ public class AuthController {
     @Autowired
     IAuthenticateService authenticateService;
 
-    @Operation(summary = "Đăng ký tài khoản", description = "Tạo tài khoản mới với thông tin username, password, email")
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<User>> signup(@Valid @RequestBody SignUpDto signUpDto) {
-        User savedUser = authenticateService.signup(signUpDto);
+    @Operation(summary = "Yêu cầu đăng ký tài khoản", description = "Gửi OTP đến email để xác nhận đăng ký")
+    @PostMapping("/signup/request")
+    public ResponseEntity<ApiResponse<String>> requestSignup(@Valid @RequestBody SignUpDto signUpDto) {
+        authenticateService.requestSignup(signUpDto);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "OTP đã được gửi đến email của bạn.", null));
+    }
+
+    @Operation(summary = "Xác nhận đăng ký tài khoản", description = "Xác nhận OTP để hoàn tất đăng ký")
+    @PostMapping("/signup/verify")
+    public ResponseEntity<ApiResponse<User>> verifySignup(@Valid @RequestBody VerifySignUpDto verifySignUpDto) {
+        User savedUser = authenticateService.verifySignup(verifySignUpDto);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng ký thành công", savedUser));
     }
 

@@ -13,7 +13,8 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/signup",
+            "/api/auth/signup/request",
+            "/api/auth/signup/verify",
             "/api/auth/login",
             "/api/auth/logout",
             "/api/auth/reset-password",
