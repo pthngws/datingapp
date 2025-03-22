@@ -70,10 +70,11 @@ public class ProfileController {
     }
 
     @GetMapping("/recent")
-    @Operation(summary = "Lấy danh sách user mới", description = "Trả về danh sách người dùng mới đăng ký trong 7 ngày gần nhất")
+    @Operation(summary = "Lấy danh sách user mới", description = "Trả về danh sách người dùng mới đăng ký trong 7 ngày gần nhất, không bao gồm những người đã có quan hệ")
     public ResponseEntity<ApiResponse<List<User>>> getUsersCreatedWithinLast7Days() {
         try {
-            List<User> users = userService.getUsersCreatedWithinLast7Days();
+            // Sử dụng phương thức mới để lọc người dùng chưa có quan hệ
+            List<User> users = userService.getUsersCreatedWithinLast7DaysExcludingRelationships();
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Danh sách user mới trong vòng 7 ngày", users));
         } catch (Exception e) {
             e.printStackTrace();

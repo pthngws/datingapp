@@ -8,6 +8,8 @@ import java.util.List;
 public interface IUserService {
     List<User> getUsersCreatedWithinLast7Days();
 
+    List<User> getUsersCreatedWithinLast7DaysExcludingRelationships();
+
     User findByUsername(String username);
 
     User findById(ObjectId id);

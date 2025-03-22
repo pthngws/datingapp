@@ -13,5 +13,5 @@ import java.util.Optional;
 public interface RelationshipRepository extends MongoRepository<Relationship, ObjectId> {
     Optional<Relationship> findByUserId1AndUserId2(ObjectId userId1, ObjectId UserId2);
     List<Relationship> findByUserId2AndStatus(ObjectId userId2, RelationshipStatus status);
-
+    List<Relationship> findByUserId1(ObjectId userId1);
 }
