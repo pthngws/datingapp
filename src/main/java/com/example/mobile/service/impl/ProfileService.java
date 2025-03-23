@@ -1,5 +1,6 @@
 package com.example.mobile.service.impl;
 
+import com.example.mobile.dto.request.LocationUpdateDto;
 import com.example.mobile.dto.request.ProfileUpdateDTO;
 import com.example.mobile.dto.response.ProfileResponse;
 import com.example.mobile.exception.AppException;
@@ -104,8 +105,56 @@ public class ProfileService implements IProfileService {
 
 
     @Override
-    public List<Profile> searchProfiles(String firstName, String lastName, Gender gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight) {
-        return profileRepository.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight);
+    public List<Profile> searchProfiles(String firstName, String lastName, Gender gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight, Double maxDistance) {
+        // Lấy danh sách hồ sơ theo các tiêu chí hiện có
+        List<Profile> profiles = profileRepository.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight);
+
+        // Lấy thông tin người dùng hiện tại
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        ObjectId currentUserId = new ObjectId(authentication.getName());
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+        Optional<Profile> currentProfileOpt = profileRepository.findById(currentUser.getProfileId());
+        if (currentProfileOpt.isEmpty()) {
+            throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
+        }
+        Profile currentProfile = currentProfileOpt.get();
+
+        // Nếu không có maxDistance, chỉ loại trừ người dùng hiện tại và trả về danh sách
+        if (maxDistance == null) {
+            return profiles.stream()
+                    .filter(profile -> !profile.getId().equals(currentProfile.getId())) // Loại trừ người dùng hiện tại
+                    .collect(Collectors.toList());
+        }
+
+        // Lấy vị trí của người dùng hiện tại
+        Address currentAddress = addressRepository.findById(currentProfile.getAddressId())
+                .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND));
+
+        // Lọc hồ sơ theo khoảng cách và loại trừ người dùng hiện tại
+        return profiles.stream()
+                .filter(profile -> {
+                    // Loại trừ người dùng hiện tại
+                    if (profile.getId().equals(currentProfile.getId())) {
+                        return false;
+                    }
+
+                    try {
+                        Address address = addressRepository.findById(profile.getAddressId())
+                                .orElse(null);
+                        if (address == null) {
+                            return false; // Bỏ qua nếu không có địa chỉ
+                        }
+                        double distance = calculateDistance(
+                                currentAddress.getLatitude(), currentAddress.getLongitude(),
+                                address.getLatitude(), address.getLongitude()
+                        );
+                        return distance <= maxDistance; // Chỉ giữ lại hồ sơ trong bán kính maxDistance
+                    } catch (Exception e) {
+                        return false; // Bỏ qua nếu có lỗi khi tính khoảng cách
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -181,4 +230,47 @@ public class ProfileService implements IProfileService {
                 .build();
     }
 
+    @Override
+    public void updateLocation(LocationUpdateDto request) {
+        // Lấy thông tin người dùng hiện tại từ token
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        ObjectId userId = new ObjectId(authentication.getName());
+
+        // Tìm user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+
+        // Tìm profile
+        Optional<Profile> optionalProfile = profileRepository.findById(user.getProfileId());
+        if (optionalProfile.isEmpty()) {
+            throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
+        }
+        Profile profile = optionalProfile.get();
+
+        // Tìm address
+        Optional<Address> optionalAddress = addressRepository.findById(profile.getAddressId());
+        if (optionalAddress.isEmpty()) {
+            throw new AppException(ErrorCode.ADDRESS_NOT_FOUND);
+        }
+        Address address = optionalAddress.get();
+
+        // Cập nhật latitude và longitude
+        address.setLatitude(request.getLatitude());
+        address.setLongitude(request.getLongitude());
+
+        // Lưu address
+        addressRepository.save(address);
+    }
+
+    // Phương thức tính khoảng cách giữa hai điểm (Haversine formula)
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Bán kính Trái Đất (km)
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Khoảng cách tính bằng km
+    }
 }

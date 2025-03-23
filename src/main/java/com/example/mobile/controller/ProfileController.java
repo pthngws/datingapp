@@ -1,5 +1,6 @@
 package com.example.mobile.controller;
 
+import com.example.mobile.dto.request.LocationUpdateDto;
 import com.example.mobile.dto.request.ProfileUpdateDTO;
 import com.example.mobile.dto.response.ApiResponse;
 import com.example.mobile.dto.response.ProfileResponse;
@@ -49,7 +50,7 @@ public class ProfileController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Tìm kiếm hồ sơ", description = "Lọc hồ sơ người dùng theo các tiêu chí như tên, giới tính, tuổi, chiều cao")
+    @Operation(summary = "Tìm kiếm hồ sơ", description = "Lọc hồ sơ người dùng theo các tiêu chí như tên, giới tính, tuổi, chiều cao, và khoảng cách")
     public ResponseEntity<ApiResponse<List<Profile>>> searchProfiles(
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
@@ -58,15 +59,17 @@ public class ProfileController {
             @RequestParam(required = false) Integer minAge,
             @RequestParam(required = false) Integer maxAge,
             @RequestParam(required = false) Integer minHeight,
-            @RequestParam(required = false) Integer maxHeight
+            @RequestParam(required = false) Integer maxHeight,
+            @RequestParam(required = false) Double maxDistance // Thêm tham số maxDistance (km)
     ) {
         try {
-            List<Profile> profiles = profileService.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight);
+            List<Profile> profiles = profileService.searchProfiles(firstName, lastName, gender, age, minAge, maxAge, minHeight, maxHeight, maxDistance);
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Tìm kiếm thành công", profiles));
         } catch (Exception e) {
             e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống: " + e.getMessage(), null));
         }
-        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/recent")
@@ -103,5 +106,20 @@ public class ProfileController {
         ObjectId objectId = new ObjectId(id);
         ProfileResponse profile = profileService.findByUserId(objectId);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "", profile));
+    }
+
+    @PostMapping("/update-location")
+    @Operation(summary = "Cập nhật vị trí", description = "Cập nhật vĩ độ và kinh độ của người dùng hiện tại")
+    public ResponseEntity<ApiResponse<Void>> updateLocation(@Valid @RequestBody LocationUpdateDto request) {
+        try {
+            profileService.updateLocation(request);
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Cập nhật vị trí thành công", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống: " + e.getMessage(), null));
+        }
     }
 }
