@@ -273,7 +273,16 @@ public class AuthenticateService implements IAuthenticateService {
         ObjectId userId = new ObjectId(authentication.getName());
         refreshTokenService.deleteRefreshToken(userId);
     }
-
+    private ObjectId getUserIdFromRefreshToken(RefreshTokenDto refreshToken) {
+        // Duyệt qua tất cả user để tìm refresh token (Không tối ưu)
+        for (User user : userRepository.findAll()) {
+            String storedToken = refreshTokenService.getRefreshToken(user.getId());
+            if (refreshToken.getRefreshToken().equals(storedToken)) {
+                return user.getId();
+            }
+        }
+        return null;
+    }
     @Override
     public void sendOtp(ForgotPassWordDto forgotPassWordDto) {
         String email = forgotPassWordDto.getEmail();
@@ -301,14 +310,5 @@ public class AuthenticateService implements IAuthenticateService {
         return true;
     }
 
-    private ObjectId getUserIdFromRefreshToken(RefreshTokenDto refreshToken) {
-        // Duyệt qua tất cả user để tìm refresh token (Không tối ưu)
-        for (User user : userRepository.findAll()) {
-            String storedToken = refreshTokenService.getRefreshToken(user.getId());
-            if (refreshToken.getRefreshToken().equals(storedToken)) {
-                return user.getId();
-            }
-        }
-        return null;
-    }
+
 }

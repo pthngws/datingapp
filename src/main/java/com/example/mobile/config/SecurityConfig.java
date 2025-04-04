@@ -33,6 +33,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtDecoder jwtDecoder, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
         httpSecurity
                 .authorizeHttpRequests(request -> request
+                        .requestMatchers("/ws/**").permitAll() //Test
+                        .requestMatchers("/api/messages/**").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                         .requestMatchers(USER_ENDPOINTS).hasRole("USER")

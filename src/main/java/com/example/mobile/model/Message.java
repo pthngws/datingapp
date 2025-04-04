@@ -15,9 +15,9 @@ public class Message {
 
     private String content;
 
-    private String senderId;
+    private ObjectId senderId;
 
-    private String receiverId;
+    private ObjectId receiverId;
 
     private boolean isRead = false;
 

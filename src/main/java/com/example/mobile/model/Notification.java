@@ -14,7 +14,7 @@ public class Notification {
     @Id
     private ObjectId id;
 
-    private String userId;
+    private ObjectId userId;
 
     private Type type;
 
