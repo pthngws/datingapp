@@ -11,8 +11,11 @@ import java.util.List;
 
 public interface IProfileService {
 
-    List<Profile> searchProfiles(String firstName, String lastName, Gender gender, Integer age, Integer minAge, Integer maxAge, Integer minHeight, Integer maxHeight, Double maxDistance);
+    List<Profile> searchProfiles(Gender gender, Integer minAge, Integer maxAge, Double maxDistance);
     Profile updateProfile(ProfileUpdateDTO profileUpdateDTO);
+    ProfileResponse findById(ObjectId Id);
+
     ProfileResponse findByUserId(ObjectId userId);
+
     void updateLocation(LocationUpdateDto request);
 }

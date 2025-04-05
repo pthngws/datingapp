@@ -17,15 +17,9 @@ public class   ProfileRepositoryImpl implements ProfileRepositoryCustom {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public List<Profile> searchProfiles(String firstName, String lastName, Gender gender, Integer minAge, Integer maxAge, Integer age, Integer minHeight, Integer maxHeight) {
+    public List<Profile> searchProfiles( Gender gender, Integer minAge, Integer maxAge) {
         Query query = new Query();
 
-        if (firstName != null) {
-            query.addCriteria(Criteria.where("firstName").regex(firstName, "i"));
-        }
-        if (lastName != null) {
-            query.addCriteria(Criteria.where("lastName").regex(lastName, "i"));
-        }
         if (gender != null) {
             query.addCriteria(Criteria.where("gender").is(gender.name()));
         }
