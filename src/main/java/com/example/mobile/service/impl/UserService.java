@@ -71,4 +71,8 @@ public class UserService implements IUserService {
         return optionalUser.orElse(null);
     }
 
+    @Override
+    public User getUserByProfileId(ObjectId profileId) {
+        return userRepository.findByProfileId(profileId);
+    }
 }

@@ -286,4 +286,32 @@ public class RelationshipService implements IRelationshipService {
             throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
         }
     }
+
+    @Transactional
+    @Override
+    public List<ObjectId> filterUserIdsWithRelationship(List<ObjectId> userIds) {
+        try {
+            // Lấy userId của người dùng hiện tại từ security context
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getName() == null) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+            ObjectId currentUserId = new ObjectId(authentication.getName());
+
+            // Tìm tất cả các relationship mà user1 là currentUserId
+            List<Relationship> relationships = relationshipRepository.findByUserId1(currentUserId);
+
+            // Lọc ra userId2 mà userId1 là currentUserId và userId2 nằm trong danh sách userIds
+            List<ObjectId> filteredUserIds = relationships.stream()
+                    .map(r -> r.getUserId2()) // Lấy userId2
+                    .filter(userIds::contains) // Chỉ lấy các userId2 có trong userIds
+                    .collect(Collectors.toList());
+
+            return filteredUserIds;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
 }

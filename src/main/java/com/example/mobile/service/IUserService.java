@@ -13,4 +13,6 @@ public interface IUserService {
     User findByUsername(String username);
 
     User findById(ObjectId id);
+
+    User getUserByProfileId(ObjectId profileId);
 }

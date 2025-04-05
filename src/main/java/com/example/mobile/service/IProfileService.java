@@ -13,7 +13,6 @@ public interface IProfileService {
 
     List<Profile> searchProfiles(Gender gender, Integer minAge, Integer maxAge, Double maxDistance);
     Profile updateProfile(ProfileUpdateDTO profileUpdateDTO);
-    ProfileResponse findById(ObjectId Id);
 
     ProfileResponse findByUserId(ObjectId userId);
 

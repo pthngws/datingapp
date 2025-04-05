@@ -10,6 +10,7 @@ import com.example.mobile.model.User;
 import com.example.mobile.model.enums.Gender;
 import com.example.mobile.service.IImageUploadService;
 import com.example.mobile.service.IProfileService;
+import com.example.mobile.service.IRelationshipService;
 import com.example.mobile.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +39,9 @@ public class ProfileController {
     @Autowired
     private IImageUploadService imageUploadService;
 
+    @Autowired
+    private IRelationshipService relationshipService;
+
     @PostMapping(value = "/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Tải ảnh", description = "Cho phép người dùng tải lên nhiều ảnh hồ sơ cùng lúc")
     public ResponseEntity<?> uploadImages(
@@ -59,11 +63,30 @@ public class ProfileController {
             @RequestParam(required = false) Double maxDistance
     ) {
         try {
+            // Tìm kiếm hồ sơ theo các tiêu chí
             List<Profile> profiles = profileService.searchProfiles(gender, minAge, maxAge, maxDistance);
-            List<String> ids = profiles.stream()
-                    .map(p -> p.getId().toHexString())
+
+            // Lấy danh sách userId tương ứng với các profile
+            List<ObjectId> userIds = profiles.stream()
+                    .map(p -> {
+                        // Lấy userId từ profileId
+                        User user = userService.getUserByProfileId(p.getId());
+                        return user.getId(); // Lấy ObjectId userId
+                    })
                     .collect(Collectors.toList());
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Tìm kiếm thành công", ids));
+
+            // Lọc ra các userIds mà bạn đã có mối quan hệ với họ
+            List<ObjectId> filteredUserIds = relationshipService.filterUserIdsWithRelationship(userIds);
+
+            // Loại bỏ các userIds đã có mối quan hệ
+            userIds.removeAll(filteredUserIds);
+
+            // Chuyển ObjectId thành String
+            List<String> remainingUserIds = userIds.stream()
+                    .map(ObjectId::toHexString)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Tìm kiếm thành công", remainingUserIds));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -72,6 +95,14 @@ public class ProfileController {
     }
 
 
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Lấy thông tin hồ sơ", description = "Trả về thông tin chi tiết của hồ sơ người dùng dựa trên ID")
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfileByUserId(@PathVariable String id) {
+        ObjectId objectId = new ObjectId(id);
+        ProfileResponse profile = profileService.findByUserId(objectId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "", profile));
+    }
 
     @GetMapping("/recent")
     @Operation(summary = "Lấy danh sách user mới", description = "Trả về danh sách người dùng mới đăng ký trong 7 ngày gần nhất, không bao gồm những người đã có quan hệ")
@@ -101,13 +132,7 @@ public class ProfileController {
         }
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Lấy thông tin hồ sơ", description = "Trả về thông tin chi tiết của hồ sơ người dùng dựa trên ID")
-    public ResponseEntity<ApiResponse<ProfileResponse>> getProfileByUserId(@PathVariable String id) {
-        ObjectId objectId = new ObjectId(id);
-        ProfileResponse profile = profileService.findById(objectId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "", profile));
-    }
+
 
     @PostMapping("/update-location")
     @Operation(summary = "Cập nhật vị trí", description = "Cập nhật vĩ độ và kinh độ của người dùng hiện tại")
