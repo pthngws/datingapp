@@ -2,10 +2,7 @@ package com.example.mobile.controller;
 
 import com.example.mobile.dto.MessageDTO;
 import com.example.mobile.model.Message;
-import com.example.mobile.model.Notification;
-import com.example.mobile.model.enums.Type;
 import com.example.mobile.repository.MessageRepository;
-import com.example.mobile.repository.NotificationRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -16,31 +13,36 @@ import java.time.LocalDateTime;
 
 @Controller
 public class ChatController {
-    @Autowired
-    private  SimpMessagingTemplate template;
-    @Autowired
-    private  MessageRepository messageRepository;
-    @Autowired
-    private NotificationRepository notificationRepository;
 
+    @Autowired
+    private SimpMessagingTemplate template;
+
+    @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
+    private NotificationController notificationController;
 
     @MessageMapping("/chat")
     public void sendMessage(MessageDTO chatMessage) {
+        System.out.println("Received message from client: " + chatMessage);
+
         Message message = new Message();
-        message.setSenderId(chatMessage.getSenderId());
-        message.setReceiverId(chatMessage.getReceiverId());
+        message.setSenderId(new ObjectId(String.valueOf(chatMessage.getSenderId())));
+        message.setReceiverId(new ObjectId(String.valueOf(chatMessage.getReceiverId())));
         message.setContent(chatMessage.getContent());
         message.setSendTime(LocalDateTime.now());
         messageRepository.save(message);
-        template.convertAndSendToUser(String.valueOf(chatMessage.getReceiverId()), "/queue/messages", message);
 
-        // Tạo và gửi thông báo
-        Notification noti = new Notification();
-        noti.setUserId(new ObjectId(String.valueOf(chatMessage.getReceiverId())));
-        noti.setType(Type.MESSAGE);
-        noti.setContent("Bạn có tin nhắn mới từ " + chatMessage.getSenderId());
-        notificationRepository.save(noti);
+        // Convert ObjectId to String trước khi gửi qua WebSocket
+        chatMessage.setSenderId(message.getSenderId());
+        chatMessage.setReceiverId(message.getReceiverId());
 
-        template.convertAndSendToUser(String.valueOf(chatMessage.getReceiverId()), "/queue/notifications", noti);
+        template.convertAndSendToUser(String.valueOf(chatMessage.getReceiverId()), "/queue/messages", chatMessage);
+        template.convertAndSendToUser(String.valueOf(chatMessage.getSenderId()), "/queue/messages", chatMessage);
+
+        System.out.println("Triggering notification for receiver: " + chatMessage.getReceiverId());
+        notificationController.chatAction(String.valueOf(chatMessage.getSenderId()), String.valueOf(chatMessage.getReceiverId()));
     }
+
 }

@@ -33,5 +33,4 @@ public class MessageController {
     public void markAsRead(@RequestParam ObjectId receiverId) {
         messageService.markMessagesAsRead(receiverId);
     }
-
 }
