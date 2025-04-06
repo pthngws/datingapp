@@ -43,14 +43,15 @@ public class ProfileController {
     private IRelationshipService relationshipService;
 
     @PostMapping(value = "/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Tải ảnh", description = "Cho phép người dùng tải lên nhiều ảnh hồ sơ cùng lúc")
-    public ResponseEntity<?> uploadImages(
-            @RequestPart("files") MultipartFile[] files) {
+    @Operation(summary = "Upload single image", description = "Allows user to upload one profile image to a specific position")
+    public ResponseEntity<?> uploadImage(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam("position") String picPosition) {
         try {
-            Album userImages = imageUploadService.uploadImages(files);
+            Album userImages = imageUploadService.uploadImage(file, picPosition);
             return ResponseEntity.ok(userImages);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Tải ảnh thất bại: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Image upload failed: " + e.getMessage());
         }
     }
 
