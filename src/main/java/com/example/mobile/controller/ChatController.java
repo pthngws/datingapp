@@ -3,6 +3,7 @@ package com.example.mobile.controller;
 import com.example.mobile.dto.MessageDTO;
 import com.example.mobile.model.Message;
 import com.example.mobile.repository.MessageRepository;
+import com.example.mobile.service.INotificationService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,7 +23,7 @@ public class ChatController {
     private MessageRepository messageRepository;
 
     @Autowired
-    private NotificationController notificationController;
+    private INotificationService notificationService;
 
     @MessageMapping("/chat")
     public void sendMessage(MessageDTO chatMessage) {
@@ -49,6 +50,6 @@ public class ChatController {
         template.convertAndSendToUser(chatMessage.getSenderId(), "/queue/messages", chatMessage);
 
         // Gửi thông báo (nếu cần)
-        notificationController.chatAction(chatMessage.getSenderId(), chatMessage.getReceiverId());
+        notificationService.chatAction(chatMessage.getSenderId(), chatMessage.getReceiverId());
     }
 }

@@ -44,6 +44,9 @@ public class RelationshipService implements IRelationshipService {
     @Autowired
     private AlbumRepository albumRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     @Override
     public String likeUser(String targetUserId) {
@@ -72,9 +75,11 @@ public class RelationshipService implements IRelationshipService {
                 reverse.setStatus(RelationshipStatus.MATCHED);
                 relationshipRepository.save(relationship);
                 relationshipRepository.save(reverse);
+                notificationService.matchAction(userId.toHexString(),userId2.toHexString());
+                notificationService.matchAction(userId2.toHexString(),userId.toHexString());
                 return "Đã ghép đôi thành công!";
             }
-
+            notificationService.likeAction(userId.toHexString(),userId2.toHexString());
             return "Bạn đã thích " + targetUserId;
         } catch (IllegalArgumentException e) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
@@ -254,20 +259,14 @@ public class RelationshipService implements IRelationshipService {
                 throw new AppException(ErrorCode.UNAUTHENTICATED);
             }
 
-            ObjectId currentUserId = new ObjectId(authentication.getName());
+            ObjectId userId = new ObjectId(authentication.getName());
+            List<Relationship> likedByOthers = relationshipRepository.findByUserId2AndStatus(userId, RelationshipStatus.MATCHED);
 
-            // Lấy tất cả Relationship mà currentUserId là userId1 hoặc userId2 với status MATCHED
-            List<Relationship> matchedRelationships = relationshipRepository
-                    .findByUserId1AndStatusOrUserId2AndStatus(currentUserId, RelationshipStatus.MATCHED, currentUserId, RelationshipStatus.MATCHED);
-
-            return matchedRelationships.stream()
+            return likedByOthers.stream()
                     .map(rel -> {
                         try {
-                            // Xác định userId của người kia (không phải currentUserId)
-                            ObjectId otherUserId = rel.getUserId1().equals(currentUserId) ? rel.getUserId2() : rel.getUserId1();
-
-                            // Lấy User từ otherUserId
-                            User user = userRepository.findById(otherUserId)
+                            // Lấy User từ userId (rel.getUserId1())
+                            User user = userRepository.findById(rel.getUserId1())
                                     .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
 
                             // Lấy Profile từ profileId trong User
