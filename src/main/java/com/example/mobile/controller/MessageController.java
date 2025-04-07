@@ -1,36 +1,38 @@
 package com.example.mobile.controller;
 
+import com.example.mobile.dto.MessageDTO;
 import com.example.mobile.model.Message;
 import com.example.mobile.service.IMessageService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/messages")
 public class MessageController {
+
     @Autowired
     private IMessageService messageService;
 
-    @PostMapping("/send")
-    public Message sendMessage(@RequestBody Message message) {
-        return messageService.sendMessage(message);
-    }
-
     @GetMapping("/conversation")
-    public List<Message> getConversation(@RequestParam ObjectId userId1, @RequestParam ObjectId userId2) {
-        return messageService.getConversation(userId1, userId2);
-    }
-
-    @GetMapping("/unread")
-    public List<Message> getUnreadMessages(@RequestParam ObjectId receiverId) {
-        return messageService.getUnreadMessages(receiverId);
-    }
-
-    @PostMapping("/mark-as-read")
-    public void markAsRead(@RequestParam ObjectId receiverId) {
-        messageService.markMessagesAsRead(receiverId);
+    public List<MessageDTO> getConversation(@RequestParam String userId1, @RequestParam String userId2) {
+        List<Message> messages = messageService.getConversation(new ObjectId(userId1), new ObjectId(userId2));
+        return messages.stream().map(m -> {
+            MessageDTO dto = new MessageDTO();
+            dto.setId(m.getId().toString());
+            dto.setSenderId(m.getSenderId().toString());
+            dto.setReceiverId(m.getReceiverId().toString());
+            dto.setContent(m.getContent());
+            dto.setSendTime(m.getSendTime().format(DateTimeFormatter.ofPattern("HH:mm")));
+            dto.setRead(m.isRead());
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

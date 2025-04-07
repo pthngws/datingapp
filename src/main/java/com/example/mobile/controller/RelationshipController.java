@@ -1,10 +1,10 @@
 package com.example.mobile.controller;
 
 import com.example.mobile.dto.response.ApiResponse;
-import com.example.mobile.dto.response.ProfileResponse;
+import com.example.mobile.dto.response.UserInfoResponse;
 import com.example.mobile.service.IRelationshipService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,17 +62,17 @@ public class RelationshipController {
 
     @Operation(summary = "Lấy danh sách người dùng đã thích tôi", description = "Trả về danh sách các profile của những người dùng đã thích người dùng hiện tại")
     @GetMapping("/liked-users")
-    public ResponseEntity<ApiResponse<List<ProfileResponse>>> getLikedUsers() {
-        List<ProfileResponse> likedUsers = relationshipService.getUsersWhoLikedMe();
-        ApiResponse<List<ProfileResponse>> response = new ApiResponse<>(HttpStatus.OK.value(), "Thành công", likedUsers);
+    public ResponseEntity<ApiResponse<List<UserInfoResponse>>> getLikedUsers() {
+        List<UserInfoResponse> likedUsers = relationshipService.getUsersWhoLikedMe();
+        ApiResponse<List<UserInfoResponse>> response = new ApiResponse<>(HttpStatus.OK.value(), "Thành công", likedUsers);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Lấy danh sách người dùng đã ghép đôi với tôi", description = "Trả về danh sách các profile của những người dùng đã ghép đôi với người dùng hiện tại")
     @GetMapping("/matched-users")
-    public ResponseEntity<ApiResponse<List<ProfileResponse>>> getMatchedUsers() {
-        List<ProfileResponse> matchedUsers = relationshipService.getUsersWhoMatchedMe();
-        ApiResponse<List<ProfileResponse>> response = new ApiResponse<>(HttpStatus.OK.value(), "Thành công", matchedUsers);
+    public ResponseEntity<ApiResponse<List<UserInfoResponse>>> getMatchedUsers() {
+        List<UserInfoResponse> matchedUsers = relationshipService.getUsersWhoMatchedMe();
+        ApiResponse<List<UserInfoResponse>> response = new ApiResponse<>(HttpStatus.OK.value(), "Thành công", matchedUsers);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

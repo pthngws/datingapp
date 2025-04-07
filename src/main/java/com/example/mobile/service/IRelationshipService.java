@@ -1,6 +1,6 @@
 package com.example.mobile.service;
 
-import com.example.mobile.dto.response.ProfileResponse;
+import com.example.mobile.dto.response.UserInfoResponse;
 import org.bson.types.ObjectId;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +22,9 @@ public interface IRelationshipService {
     @Transactional
     String unblockUser(String targetUserId);
 
-    List<ProfileResponse> getUsersWhoLikedMe();
+    List<UserInfoResponse> getUsersWhoLikedMe();
 
-    List<ProfileResponse> getUsersWhoMatchedMe();
+    List<UserInfoResponse> getUsersWhoMatchedMe();
 
     boolean isBlockedByUser(String targetUserId);
 

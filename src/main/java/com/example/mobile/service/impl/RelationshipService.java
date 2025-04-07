@@ -1,12 +1,16 @@
 package com.example.mobile.service.impl;
 
-import com.example.mobile.dto.response.ProfileResponse;
+import com.example.mobile.dto.response.UserInfoResponse;
 import com.example.mobile.exception.AppException;
 import com.example.mobile.exception.ErrorCode;
+import com.example.mobile.model.Profile;
 import com.example.mobile.model.Relationship;
+import com.example.mobile.model.User;
 import com.example.mobile.model.enums.RelationshipStatus;
+import com.example.mobile.repository.AlbumRepository;
+import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.RelationshipRepository;
-import com.example.mobile.service.IProfileService;
+import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IRelationshipService;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
@@ -32,7 +36,13 @@ public class RelationshipService implements IRelationshipService {
     private RelationshipRepository relationshipRepository;
 
     @Autowired
-    private IProfileService profileService;
+    private UserRepository userRepository;
+
+    @Autowired
+    private ProfileRepository profileRepository;
+
+    @Autowired
+    private AlbumRepository albumRepository;
 
     @Transactional
     @Override
@@ -202,7 +212,7 @@ public class RelationshipService implements IRelationshipService {
     }
 
     @Override
-    public List<ProfileResponse> getUsersWhoLikedMe() {
+    public List<UserInfoResponse> getUsersWhoLikedMe() {
         try {
             var authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication == null || authentication.getName() == null) {
@@ -215,11 +225,15 @@ public class RelationshipService implements IRelationshipService {
             return likedByOthers.stream()
                     .map(rel -> {
                         try {
-                            ProfileResponse profile = profileService.findByUserId(rel.getUserId1());
-                            if (profile == null) {
-                                throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
-                            }
-                            return profile;
+                            // Lấy User từ userId (rel.getUserId1())
+                            User user = userRepository.findById(rel.getUserId1())
+                                    .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
+
+                            // Lấy Profile từ profileId trong User
+                            Profile profile = profileRepository.findById(user.getProfileId())
+                                    .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
+
+                            return convertToUserInfoResponse(profile, user.getId().toString());
                         } catch (AppException e) {
                             throw e;
                         }
@@ -227,36 +241,42 @@ public class RelationshipService implements IRelationshipService {
                     .collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
-        } catch (DataAccessException e) {
-            throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
         } catch (Exception e) {
             throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
         }
     }
 
     @Override
-    public List<ProfileResponse> getUsersWhoMatchedMe() {
+    public List<UserInfoResponse> getUsersWhoMatchedMe() {
         try {
             var authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication == null || authentication.getName() == null) {
                 throw new AppException(ErrorCode.UNAUTHENTICATED);
             }
 
-            ObjectId userId = new ObjectId(authentication.getName());
-            List<Relationship> matchedUsers = relationshipRepository.findByUserId2AndStatus(userId, RelationshipStatus.MATCHED);
+            ObjectId currentUserId = new ObjectId(authentication.getName());
 
-            return matchedUsers.stream()
+            // Lấy tất cả Relationship mà currentUserId là userId1 hoặc userId2 với status MATCHED
+            List<Relationship> matchedRelationships = relationshipRepository
+                    .findByUserId1AndStatusOrUserId2AndStatus(currentUserId, RelationshipStatus.MATCHED, currentUserId, RelationshipStatus.MATCHED);
+
+            return matchedRelationships.stream()
                     .map(rel -> {
                         try {
-                            ProfileResponse profile = profileService.findByUserId(rel.getUserId1());
-                            if (profile == null) {
-                                throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
-                            }
-                            return profile;
+                            // Xác định userId của người kia (không phải currentUserId)
+                            ObjectId otherUserId = rel.getUserId1().equals(currentUserId) ? rel.getUserId2() : rel.getUserId1();
+
+                            // Lấy User từ otherUserId
+                            User user = userRepository.findById(otherUserId)
+                                    .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
+
+                            // Lấy Profile từ profileId trong User
+                            Profile profile = profileRepository.findById(user.getProfileId())
+                                    .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
+
+                            return convertToUserInfoResponse(profile, user.getId().toString());
                         } catch (AppException e) {
                             throw e;
-                        } catch (Exception e) {
-                            throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
                         }
                     })
                     .collect(Collectors.toList());
@@ -265,6 +285,16 @@ public class RelationshipService implements IRelationshipService {
         } catch (Exception e) {
             throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
         }
+    }
+
+    private UserInfoResponse convertToUserInfoResponse(Profile profile, String userId) {
+        UserInfoResponse response = new UserInfoResponse();
+        response.setUserId(userId);               // Lấy từ User
+        response.setAge(profile.getAge());        // Lấy từ Profile
+        response.setFirstName(profile.getFirstName()); // Lấy từ Profile
+        response.setLastName(profile.getLastName());   // Lấy từ Profile
+        response.setPic1(albumRepository.findById(profile.getAlbumId()).get().getPic1()); // Giả sử pic1 là từ albumId
+        return response;
     }
 
     @Override

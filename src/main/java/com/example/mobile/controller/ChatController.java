@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Controller
 public class ChatController {
@@ -27,22 +28,27 @@ public class ChatController {
     public void sendMessage(MessageDTO chatMessage) {
         System.out.println("Received message from client: " + chatMessage);
 
+        // Tạo và lưu tin nhắn vào database
         Message message = new Message();
-        message.setSenderId(new ObjectId(String.valueOf(chatMessage.getSenderId())));
-        message.setReceiverId(new ObjectId(String.valueOf(chatMessage.getReceiverId())));
+        message.setSenderId(new ObjectId(chatMessage.getSenderId()));
+        message.setReceiverId(new ObjectId(chatMessage.getReceiverId()));
         message.setContent(chatMessage.getContent());
         message.setSendTime(LocalDateTime.now());
-        messageRepository.save(message);
+        message.setRead(false);
 
-        // Convert ObjectId to String trước khi gửi qua WebSocket
-        chatMessage.setSenderId(message.getSenderId());
-        chatMessage.setReceiverId(message.getReceiverId());
+        Message savedMessage = messageRepository.save(message);
 
-        template.convertAndSendToUser(String.valueOf(chatMessage.getReceiverId()), "/queue/messages", chatMessage);
-        template.convertAndSendToUser(String.valueOf(chatMessage.getSenderId()), "/queue/messages", chatMessage);
+        // Cập nhật MessageDTO để gửi qua WebSocket
+        chatMessage.setId(savedMessage.getId().toString());
+        chatMessage.setSenderId(savedMessage.getSenderId().toString());
+        chatMessage.setReceiverId(savedMessage.getReceiverId().toString());
+        chatMessage.setSendTime(savedMessage.getSendTime().format(DateTimeFormatter.ofPattern("HH:mm")));
 
-        System.out.println("Triggering notification for receiver: " + chatMessage.getReceiverId());
-        notificationController.chatAction(String.valueOf(chatMessage.getSenderId()), String.valueOf(chatMessage.getReceiverId()));
+        // Gửi tin nhắn tới cả người nhận và người gửi
+        template.convertAndSendToUser(chatMessage.getReceiverId(), "/queue/messages", chatMessage);
+        template.convertAndSendToUser(chatMessage.getSenderId(), "/queue/messages", chatMessage);
+
+        // Gửi thông báo (nếu cần)
+        notificationController.chatAction(chatMessage.getSenderId(), chatMessage.getReceiverId());
     }
-
 }
