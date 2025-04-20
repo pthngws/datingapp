@@ -1,5 +1,6 @@
 package com.example.mobile.service.impl;
 
+import com.example.mobile.dto.NotificationDTO;
 import com.example.mobile.dto.response.ProfileResponse;
 import com.example.mobile.model.Notification;
 import com.example.mobile.model.enums.Type;
@@ -19,6 +20,7 @@ public class NotificationService implements INotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
@@ -64,10 +66,18 @@ public class NotificationService implements INotificationService {
         Notification savedNotification = this.saveNotification(notification);
         System.out.println("Sending notification to user: " + savedNotification.getUserId());
 
-        messagingTemplate.convertAndSendToUser(
-                savedNotification.getUserId().toHexString(),
-                "/queue/notifications",
-                savedNotification
+        // Tạo DTO với id và userId dạng chuỗi hex
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setId(savedNotification.getId() != null ? savedNotification.getId().toHexString() : null);
+        notificationDTO.setUserId(savedNotification.getUserId() != null ? savedNotification.getUserId().toHexString() : null);
+        notificationDTO.setType(savedNotification.getType().toString());
+        notificationDTO.setContent(savedNotification.getContent());
+        notificationDTO.setRead(savedNotification.isRead());
+        notificationDTO.setCreatedAt(savedNotification.getCreatedAt() != null ? savedNotification.getCreatedAt().toString() : null);
+
+        messagingTemplate.convertAndSend(
+                "/topic/notifications",
+                notificationDTO
         );
     }
 }
