@@ -34,8 +34,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtDecoder jwtDecoder, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
         httpSecurity
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/ws/**").permitAll() //Test
-                        .requestMatchers("/api/messages/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll() // Cho phép tất cả truy cập WebSocket
+                        .requestMatchers("/api/messages/**").permitAll() // Cho phép API tin nhắn
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                         .requestMatchers(USER_ENDPOINTS).hasRole("USER")
@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 .userService(new CustomOAuth2UserService()) // Hỗ trợ cả Google và Facebook
                         )
                 )
-                .csrf(AbstractHttpConfigurer::disable);
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable); // Tạm thời vô hiệu hóa CORS để kiểm tra
 
         return httpSecurity.build();
     }

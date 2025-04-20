@@ -25,11 +25,15 @@ public class ChatController {
     @Autowired
     private INotificationService notificationService;
 
+    public ChatController() {
+        System.out.println("ChatController initialized");
+    }
+
     @MessageMapping("/chat")
     public void sendMessage(MessageDTO chatMessage) {
-        System.out.println("Received message from client: " + chatMessage);
+        System.out.println("Received message in ChatController: " + chatMessage);
 
-        // Tạo và lưu tin nhắn vào database
+        // Lưu tin nhắn vào database
         Message message = new Message();
         message.setSenderId(new ObjectId(chatMessage.getSenderId()));
         message.setReceiverId(new ObjectId(chatMessage.getReceiverId()));
@@ -45,9 +49,8 @@ public class ChatController {
         chatMessage.setReceiverId(savedMessage.getReceiverId().toString());
         chatMessage.setSendTime(savedMessage.getSendTime().format(DateTimeFormatter.ofPattern("HH:mm")));
 
-        // Gửi tin nhắn tới cả người nhận và người gửi
-        template.convertAndSendToUser(chatMessage.getReceiverId(), "/queue/messages", chatMessage);
-        template.convertAndSendToUser(chatMessage.getSenderId(), "/queue/messages", chatMessage);
+        // Gửi tin nhắn đến topic chung
+        template.convertAndSend("/topic/messages", chatMessage);
 
         // Gửi thông báo (nếu cần)
         notificationService.chatAction(chatMessage.getSenderId(), chatMessage.getReceiverId());
