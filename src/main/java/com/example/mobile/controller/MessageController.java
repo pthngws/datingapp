@@ -1,14 +1,13 @@
 package com.example.mobile.controller;
 
+import com.example.mobile.dto.ConversationSummaryDTO;
 import com.example.mobile.dto.MessageDTO;
 import com.example.mobile.model.Message;
 import com.example.mobile.service.IMessageService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -16,6 +15,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/messages")
+@Tag(name = "6. Message", description = "Các API liên quan đến nhắn tin")
 public class MessageController {
 
     @Autowired
@@ -34,5 +34,20 @@ public class MessageController {
             dto.setRead(m.isRead());
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    @GetMapping("/summaries")
+    public List<ConversationSummaryDTO> getConversationSummaries() {
+        return messageService.getConversationSummaries();
+    }
+
+    @PutMapping("/mark-read")
+    public void markMessagesAsRead(@RequestParam String senderId) {
+        try {
+            ObjectId senderObjectId = new ObjectId(senderId);
+            messageService.markMessagesAsRead(senderObjectId);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid sender ID", e);
+        }
     }
 }
