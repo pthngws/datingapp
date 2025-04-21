@@ -6,10 +6,8 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -41,7 +39,25 @@ public class NotificationController {
             return map;
         }).collect(Collectors.toList());
     }
+    @PutMapping("/mark-as-read")
+    public void markNotificationsAsRead() {
+        ObjectId currentUserId = getCurrentUserId();
+        List<Notification> notifications = notificationRepository.findByUserId(currentUserId);
+        for (Notification notification : notifications) {
+            if (!notification.isRead()) {
+                notification.setRead(true);
+                notificationRepository.save(notification);
+            }
+        }
 
+    }
+    private ObjectId getCurrentUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new RuntimeException("User not authenticated");
+        }
+        return new ObjectId(authentication.getName());
+    }
     // Xử lý thông báo gửi qua WebSocket
     @MessageMapping("/notify")
     public void sendNotification(Notification notification) {
