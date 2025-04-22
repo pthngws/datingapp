@@ -20,7 +20,7 @@ public class ReportService implements IReportService {
         ObjectId userId = new ObjectId(authentication.getName());
         Report report = new Report();
         report.setReporterId(userId);
-        report.setReportedUserId(reportDto.getReportedUserId());
+        report.setReportedUserId(new ObjectId(reportDto.getReportedUserId()));
         report.setReason(reportDto.getReason());
         return reportRepository.save(report);
     }
