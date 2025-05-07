@@ -66,7 +66,16 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập thành công", userResponse));
     }
 
-
+    @PostMapping("/google-login")
+    public ResponseEntity<ApiResponse<UserResponse>> googleLogin(@RequestBody IdTokenDto tokenDto) throws JOSEException {
+        UserResponse userResponse = authenticateService.googleLogin(tokenDto.getIdToken());
+        if (userResponse == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Không thể xác thực bằng Google", null)
+            );
+        }
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Đăng nhập Google thành công", userResponse));
+    }
 
     @Operation(summary = "Đăng xuất", description = "Xóa refresh token của người dùng")
     @PostMapping("/logout")

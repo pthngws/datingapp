@@ -21,6 +21,7 @@ public class SecurityConfig {
             "/api/auth/reset-password",
             "/api/auth/forgot-password",
             "/api/auth/refresh-token",
+            "/api/auth/google-login",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",

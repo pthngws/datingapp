@@ -15,7 +15,8 @@ public interface IAuthenticateService {
 
     User verifySignup(VerifySignUpDto verifySignUpDto);  UserResponse login(LoginDto loginRequestDto) throws JOSEException;
     UserResponse oauth2Login(OidcUser oidcUser, OAuth2User oAuth2User) throws JOSEException;
-
+    User findOrCreateUser(String email, String name, String provider);
+    UserResponse googleLogin(String idToken) throws JOSEException;
     String generateToken(User userEntity) throws JOSEException;
     String generateRefreshToken(User userEntity);
     String introspectToken(AccessTokenDto token) throws JOSEException, ParseException;

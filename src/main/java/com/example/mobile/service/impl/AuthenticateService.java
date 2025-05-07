@@ -18,6 +18,10 @@ import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IAuthenticateService;
 import com.example.mobile.service.IUserService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -145,19 +149,64 @@ public class AuthenticateService implements IAuthenticateService {
 
     @Override
     public UserResponse login(LoginDto loginRequestDto) throws JOSEException {
-        User user = userService.findByUsername(loginRequestDto.getUsername());
-        if (user == null || !passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
-            throw new AppException(ErrorCode.USER_NOT_EXIST);
+        // Nếu là đăng nhập bằng Google
+        if (loginRequestDto.isGoogleLogin()) {
+            String email = loginRequestDto.getUsername(); // Email từ Google
+
+            // Tìm user bằng email
+            Optional<User> existingUser = userRepository.findByEmail(email);
+            User user = existingUser.orElseGet(() -> {
+                // Tạo user mới nếu chưa tồn tại
+                User newUser = new User();
+                newUser.setEmail(email);
+                newUser.setUsername(email.split("@")[0]); // Tạo username từ phần đầu email
+                newUser.setRole(Role.USER);
+                newUser.setProvider(Provider.GOOGLE);
+                newUser.setCreateAt(LocalDate.now());
+                newUser.setAccountStatus(AccoutStatus.ACTIVE);
+                newUser.setSubscriptionStatus(SubscriptionStatus.FREE);
+
+                // Tạo profile, address, album
+                Profile profile = new Profile();
+                Address address = new Address();
+                addressRepository.save(address);
+                Album album = new Album();
+                albumRepository.save(album);
+                profile.setAddressId(address.getId());
+                profile.setAlbumId(album.getId());
+                profileRepository.save(profile);
+                newUser.setProfileId(profile.getId());
+
+                return userRepository.save(newUser);
+            });
+
+            if (user.getAccountStatus() != AccoutStatus.ACTIVE) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            String accessToken = this.generateToken(user);
+            String refreshToken = this.generateRefreshToken(user);
+            UserResponse userResponse = new UserResponse(user);
+            userResponse.setToken(accessToken);
+            userResponse.setRefreshToken(refreshToken);
+            return userResponse;
         }
-        if (user.getAccountStatus() != AccoutStatus.ACTIVE) {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        // Đăng nhập thông thường
+        else {
+            User user = userService.findByUsername(loginRequestDto.getUsername());
+            if (user == null || !passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
+                throw new AppException(ErrorCode.USER_NOT_EXIST);
+            }
+            if (user.getAccountStatus() != AccoutStatus.ACTIVE) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+            String accessToken = this.generateToken(user);
+            String refreshToken = this.generateRefreshToken(user);
+            UserResponse userResponse = new UserResponse(user);
+            userResponse.setToken(accessToken);
+            userResponse.setRefreshToken(refreshToken);
+            return userResponse;
         }
-        String accessToken = this.generateToken(user);
-        String refreshToken = this.generateRefreshToken(user);
-        UserResponse userResponse = new UserResponse(user);
-        userResponse.setToken(accessToken);
-        userResponse.setRefreshToken(refreshToken);
-        return userResponse;
     }
 
     @Override
@@ -208,6 +257,69 @@ public class AuthenticateService implements IAuthenticateService {
         String refreshToken = generateRefreshToken(user);
 
         return new UserResponse(user, accessToken, refreshToken);
+    }
+
+    @Override
+    public User findOrCreateUser(String email, String name, String provider) {
+        return null;
+    }
+
+    @Override
+    public UserResponse googleLogin(String idToken) throws JOSEException {
+        try {
+            // Xác minh Google ID Token
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList("682947406441-00mqnufgm7kv6ucgccf9alreitg5dp08.apps.googleusercontent.com"))
+                    .build();
+
+            GoogleIdToken googleIdToken = verifier.verify(idToken);
+            if (googleIdToken == null) {
+                throw new AppException(ErrorCode.INVALID_TOKEN);
+            }
+
+            GoogleIdToken.Payload payload = googleIdToken.getPayload();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String provider = "GOOGLE";
+
+            // Tìm hoặc tạo người dùng
+            Optional<User> existingUser = userRepository.findByEmail(email);
+            User user = existingUser.orElseGet(() -> {
+                User newUser = new User();
+                newUser.setEmail(email);
+                newUser.setUsername(name != null ? name.replaceAll("\\s", "").toLowerCase() : email.split("@")[0]);
+                newUser.setRole(Role.USER);
+                newUser.setProvider(Provider.GOOGLE);
+                newUser.setCreateAt(LocalDate.now());
+                newUser.setAccountStatus(AccoutStatus.ACTIVE);
+                newUser.setSubscriptionStatus(SubscriptionStatus.FREE);
+
+                // Tạo profile, address, album
+                Profile profile = new Profile();
+                Address address = new Address();
+                addressRepository.save(address);
+                Album album = new Album();
+                albumRepository.save(album);
+                profile.setAddressId(address.getId());
+                profile.setAlbumId(album.getId());
+                profileRepository.save(profile);
+                newUser.setProfileId(profile.getId());
+
+                return userRepository.save(newUser);
+            });
+
+            if (user.getAccountStatus() != AccoutStatus.ACTIVE) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            // Tạo token
+            String accessToken = generateToken(user);
+            String refreshToken = generateRefreshToken(user);
+
+            return new UserResponse(user, accessToken, refreshToken);
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED, "Lỗi xác thực Google ID Token: " + e.getMessage());
+        }
     }
 
     @Override
