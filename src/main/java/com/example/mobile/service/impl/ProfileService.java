@@ -16,9 +16,15 @@ import com.example.mobile.repository.ProfileRepository;
 import com.example.mobile.repository.UserRepository;
 import com.example.mobile.service.IProfileService;
 import org.bson.types.ObjectId;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -240,26 +246,52 @@ public class ProfileService implements IProfileService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
 
         // Tìm profile
-        Optional<Profile> optionalProfile = profileRepository.findById(user.getProfileId());
-        if (optionalProfile.isEmpty()) {
-            throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
-        }
-        Profile profile = optionalProfile.get();
+        Profile profile = profileRepository.findById(user.getProfileId())
+                .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
 
         // Tìm address
-        Optional<Address> optionalAddress = addressRepository.findById(profile.getAddressId());
-        if (optionalAddress.isEmpty()) {
-            throw new AppException(ErrorCode.ADDRESS_NOT_FOUND);
-        }
-        Address address = optionalAddress.get();
+        Address address = addressRepository.findById(profile.getAddressId())
+                .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND));
 
         // Cập nhật latitude và longitude
         address.setLatitude(request.getLatitude());
         address.setLongitude(request.getLongitude());
 
+        // Gọi Nominatim để lấy tỉnh/thành phố
+        try {
+            String url = "https://nominatim.openstreetmap.org/reverse?format=json"
+                    + "&lat=" + request.getLatitude()
+                    + "&lon=" + request.getLongitude()
+                    + "&zoom=10&addressdetails=1";
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "MyLocationApp/1.0 (myemail@example.com)"); // Thay đổi phù hợp
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                JSONObject json = new JSONObject(response.getBody());
+                JSONObject addressJson = json.getJSONObject("address");
+
+                String city = addressJson.optString("city");
+                if (city.isEmpty()) {
+                    city = addressJson.optString("town", addressJson.optString("village", ""));
+                }
+
+                address.setProvince(city);
+            }
+        } catch (Exception e) {
+            // Nếu thất bại, vẫn lưu tọa độ nhưng không cập nhật tỉnh/thành
+            System.err.println("Reverse geocoding failed: " + e.getMessage());
+        }
+
         // Lưu address
         addressRepository.save(address);
     }
+
 
     // Phương thức tính khoảng cách giữa hai điểm (Haversine formula)
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
